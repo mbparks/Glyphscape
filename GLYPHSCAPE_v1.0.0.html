@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<title>GLYPHSCAPE v1.0.0 — Three-Dimensional ASCII World Instrument</title>
+<style>
+:root{
+  --bg:#0b0d0c;--surface:#121613;--surface2:#181d19;--surface3:#202720;--line:#344037;
+  --text:#f0f4ef;--muted:#aeb9b0;--faint:#7c8980;--accent:#a9e66e;--accent2:#6fd0bd;
+  --warn:#f4c95d;--danger:#ff7a72;--ok:#79d88b;--shadow:0 18px 50px rgba(0,0,0,.34);
+  --radius:12px;--header:70px;--left:304px;--right:306px;--font:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+html[data-theme="light"]{
+  --bg:#ecefe9;--surface:#fbfcf9;--surface2:#f3f6f0;--surface3:#e5ebe3;--line:#bdc8bc;
+  --text:#172019;--muted:#526057;--faint:#69766e;--accent:#397b18;--accent2:#147a6c;
+  --warn:#825f00;--danger:#b42c26;--ok:#207d37;--shadow:0 18px 50px rgba(30,45,32,.16)
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--font)}
+button,input,select,textarea{font:inherit;color:inherit}
+button,input,select,textarea{border:1px solid var(--line);background:var(--surface2);border-radius:8px}
+button{min-height:36px;padding:7px 10px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;font-weight:680;letter-spacing:.005em}
+button:hover{border-color:var(--accent);background:var(--surface3)}
+button:active{transform:translateY(1px)}
+button:disabled{opacity:.44;cursor:not-allowed;transform:none}
+button.primary{background:var(--accent);color:#14200f;border-color:transparent}
+html[data-theme="light"] button.primary{color:#fff}
+button.danger{color:var(--danger)}
+button.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+button.icon{width:38px;padding:0;font-size:18px}
+button.small{min-height:30px;padding:4px 8px;font-size:12px}
+button.segment.active,.mode-btn.active{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--surface2))}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 72%,white);outline-offset:2px}
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+#app{height:100%;display:grid;grid-template-rows:var(--header) minmax(0,1fr)}
+.app-header{display:flex;align-items:center;gap:14px;padding:10px 14px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,var(--surface2),var(--surface));z-index:20}
+.identity{min-width:245px;display:flex;align-items:center;gap:11px}
+.mark{width:42px;height:42px;border:1px solid var(--line);border-radius:11px;display:grid;place-items:center;background:var(--bg);font:900 23px/1 var(--mono);color:var(--accent);box-shadow:inset 0 0 0 1px rgba(255,255,255,.03)}
+.identity h1{font-size:18px;line-height:1.05;letter-spacing:.12em;margin:0}.identity p{font-size:11px;margin:4px 0 0;color:var(--muted);max-width:380px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.workflow{display:flex;align-items:center;gap:5px;color:var(--faint);font:650 10px/1 var(--mono);letter-spacing:.07em;margin-right:auto;white-space:nowrap}.workflow b{color:var(--muted)}
+.header-actions{display:flex;align-items:center;gap:6px}.header-actions .label-hide{display:inline}
+.version-chip,.status-chip{height:30px;border:1px solid var(--line);border-radius:999px;padding:0 9px;display:inline-flex;align-items:center;gap:7px;background:var(--surface2);font:700 11px/1 var(--mono);white-space:nowrap}
+.autosave-dot{width:8px;height:8px;border-radius:50%;background:var(--faint);box-shadow:0 0 0 3px color-mix(in srgb,var(--faint) 18%,transparent)}
+.autosave-dot.saving{background:var(--warn);animation:pulse 1s infinite}.autosave-dot.saved{background:var(--ok)}.autosave-dot.error{background:var(--danger)}
+@keyframes pulse{50%{opacity:.42}}
+.shell{min-height:0;display:grid;grid-template-columns:var(--left) minmax(0,1fr) var(--right);transition:grid-template-columns .18s ease}
+.shell.left-collapsed{grid-template-columns:0 minmax(0,1fr) var(--right)}.shell.right-collapsed{grid-template-columns:var(--left) minmax(0,1fr) 0}.shell.left-collapsed.right-collapsed{grid-template-columns:0 minmax(0,1fr) 0}
+.panel{min-width:0;overflow:hidden;background:var(--surface);position:relative;z-index:10}.panel.left{border-right:1px solid var(--line)}.panel.right{border-left:1px solid var(--line)}
+.panel-inner{width:var(--left);height:100%;overflow:auto;padding:10px 10px 28px}.right .panel-inner{width:var(--right)}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 2px 10px}.panel-head h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;margin:0;color:var(--muted)}
+.section{border:1px solid var(--line);border-radius:var(--radius);margin-bottom:9px;background:var(--surface2);overflow:hidden}.section summary{list-style:none;cursor:pointer;padding:10px 11px;font-size:12px;font-weight:800;letter-spacing:.045em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;justify-content:space-between}.section summary::-webkit-details-marker{display:none}.section summary::after{content:'▾';font-size:12px}.section:not([open]) summary::after{content:'▸'}.section-body{padding:0 10px 11px;border-top:1px solid var(--line)}
+.field{display:grid;gap:5px;margin-top:9px}.field>label,.field-label{font-size:11px;font-weight:700;color:var(--muted)}.field input,.field select{width:100%;min-height:34px;padding:6px 8px}.field input[type="range"]{padding:0;border:0;background:transparent;accent-color:var(--accent)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.field-inline{display:flex;align-items:center;gap:7px}.field-inline input[type=checkbox]{width:17px;height:17px;accent-color:var(--accent)}
+.value{font:700 11px/1 var(--mono);color:var(--accent);min-width:42px;text-align:right}.hint{font-size:11px;line-height:1.4;color:var(--faint);margin:7px 0 0}.button-row{display:flex;gap:6px;margin-top:10px}.button-row>*{flex:1}.button-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:9px}
+.workspace{min-width:0;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;background:var(--bg);position:relative}
+.toolstrip{display:flex;align-items:center;gap:7px;padding:7px 9px;border-bottom:1px solid var(--line);background:var(--surface);min-width:0;overflow-x:auto}.toolstrip::-webkit-scrollbar{height:5px}.toolstrip .group{display:flex;align-items:center;gap:4px;padding-right:7px;border-right:1px solid var(--line);white-space:nowrap}.toolstrip .group:last-child{border:0}.toolstrip .spacer{margin-left:auto}.toolstrip .mode-label{font:700 10px/1 var(--mono);color:var(--faint);padding:0 3px}
+.viewport{min-height:0;position:relative;overflow:hidden;isolation:isolate;background:#060807}.viewport canvas{width:100%;height:100%;display:block;touch-action:none;cursor:grab}.viewport[data-mode="inspect"] canvas{cursor:crosshair}.viewport[data-mode="sculpt"] canvas,.viewport[data-mode="paint"] canvas{cursor:cell}.viewport.dragging canvas{cursor:grabbing}
+.canvas-overlay{position:absolute;pointer-events:none;inset:0}.stats{position:absolute;left:10px;top:10px;display:flex;flex-wrap:wrap;gap:5px;max-width:70%}.stat{border:1px solid rgba(180,210,185,.22);background:rgba(8,12,9,.76);backdrop-filter:blur(8px);border-radius:7px;padding:5px 7px;color:#dbe6dc;font:650 10px/1 var(--mono)}
+.sample-flag{position:absolute;right:10px;top:10px;border:1px solid var(--warn);color:var(--warn);background:rgba(30,24,5,.78);border-radius:7px;padding:6px 8px;font:750 10px/1 var(--mono);pointer-events:auto}.sample-flag[hidden]{display:none}
+.selection-callout{position:absolute;display:none;pointer-events:none;transform:translate(10px,-100%);min-width:150px;max-width:250px;border:1px solid var(--accent);border-radius:8px;padding:8px;background:rgba(10,14,11,.93);color:#eef5ee;box-shadow:var(--shadow);font-size:11px}.selection-callout.visible{display:block}.selection-callout b{color:var(--accent)}
+.empty-state{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:30px;background:radial-gradient(circle at 50% 45%,rgba(100,150,110,.1),transparent 45%);pointer-events:none}.empty-state[hidden]{display:none}.empty-card{max-width:470px;border:1px solid var(--line);border-radius:16px;background:color-mix(in srgb,var(--surface) 92%,transparent);padding:26px;box-shadow:var(--shadow)}.empty-card h2{margin:0 0 8px;font-size:22px}.empty-card p{color:var(--muted);line-height:1.55;margin:0}.empty-card .primary{margin-top:16px;pointer-events:auto}
+.bottom-strip{display:flex;align-items:center;gap:8px;min-height:38px;padding:5px 9px;border-top:1px solid var(--line);background:var(--surface);font-size:11px;color:var(--muted);overflow:hidden}.bottom-strip .message{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bottom-strip .grow{flex:1}.progress{width:92px;height:6px;border-radius:999px;background:var(--surface3);overflow:hidden}.progress>i{display:block;height:100%;width:0;background:var(--accent);transition:width .15s}
+.edge-toggle{position:absolute;z-index:30;top:50%;width:24px;height:54px;min-height:0;padding:0;background:var(--surface2);border-color:var(--line);transform:translateY(-50%);font-size:13px}.edge-toggle.left{left:0;border-left:0;border-radius:0 8px 8px 0}.edge-toggle.right{right:0;border-right:0;border-radius:8px 0 0 8px}
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:9px}.metric{border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--surface)}.metric span{display:block;font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.05em}.metric b{display:block;margin-top:4px;font:750 13px/1 var(--mono);color:var(--text)}
+.legend{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:8px}.legend-item{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted)}.swatch{width:12px;height:12px;border-radius:3px;border:1px solid rgba(255,255,255,.25)}
+.log{max-height:160px;overflow:auto;border:1px solid var(--line);background:var(--surface);border-radius:8px;margin-top:8px;font:11px/1.45 var(--mono)}.log-entry{padding:6px 8px;border-bottom:1px solid var(--line)}.log-entry:last-child{border:0}.log-entry time{color:var(--faint);margin-right:6px}.log-entry.warn{color:var(--warn)}
+dialog{width:min(760px,calc(100vw - 28px));max-height:min(820px,calc(100vh - 28px));padding:0;border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--text);box-shadow:var(--shadow)}dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(4px)}.dialog-head{display:flex;align-items:center;justify-content:space-between;padding:13px 14px;border-bottom:1px solid var(--line)}.dialog-head h2{margin:0;font-size:16px}.dialog-body{padding:14px;overflow:auto;max-height:calc(100vh - 150px)}.dialog-foot{display:flex;justify-content:flex-end;gap:7px;padding:10px 14px;border-top:1px solid var(--line)}
+.project-list{display:grid;gap:7px}.project-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface2)}.project-row h3{margin:0 0 3px;font-size:13px}.project-row p{margin:0;font-size:10px;color:var(--faint)}.project-actions{display:flex;gap:5px}
+.ascii-preview{margin:0;min-height:380px;max-height:64vh;overflow:auto;padding:12px;background:#050706;color:#d4e7d4;border:1px solid var(--line);border-radius:10px;font:10px/1 var(--mono);white-space:pre;letter-spacing:0}
+.help-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.help-card{border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--surface2)}.help-card h3{margin:0 0 7px;font-size:13px}.help-card p,.help-card li{color:var(--muted);font-size:12px;line-height:1.5}.kbd{display:inline-block;padding:2px 5px;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;background:var(--surface);font:700 10px/1 var(--mono);color:var(--text)}
+.toast-region{position:fixed;z-index:1000;right:12px;bottom:12px;display:grid;gap:7px;width:min(380px,calc(100vw - 24px));pointer-events:none}.toast{pointer-events:auto;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;background:var(--surface2);box-shadow:var(--shadow);padding:10px 12px;animation:toast-in .18s ease}.toast.error{border-left-color:var(--danger)}.toast.warn{border-left-color:var(--warn)}.toast b{display:block;font-size:12px}.toast span{display:block;color:var(--muted);font-size:11px;margin-top:3px;line-height:1.35}@keyframes toast-in{from{opacity:0;transform:translateY(8px)}}
+@media(max-width:1120px){:root{--left:278px;--right:278px}.workflow{display:none}.identity p{max-width:280px}.header-actions .label-hide{display:none}}
+@media(max-width:860px){:root{--header:62px}.identity{min-width:0;margin-right:auto}.identity p{display:none}.version-chip{display:none}.shell{grid-template-columns:minmax(0,1fr)}.panel{position:absolute;top:0;bottom:0;width:min(340px,88vw);transition:transform .2s;box-shadow:var(--shadow)}.panel.left{left:0;transform:translateX(-105%)}.panel.right{right:0;transform:translateX(105%)}.shell:not(.left-collapsed) .panel.left{transform:translateX(0)}.shell:not(.right-collapsed) .panel.right{transform:translateX(0)}.panel-inner,.right .panel-inner{width:100%}.workspace{grid-column:1}.edge-toggle{top:46%}.header-actions button:not(.mobile-keep){display:none}.help-grid{grid-template-columns:1fr}.stats{max-width:90%}.toolstrip button{min-width:38px}.toolstrip .text-hide{display:none}}
+@media(max-width:520px){.app-header{padding:8px}.mark{width:38px;height:38px}.identity h1{font-size:15px}.status-chip{display:none}.toolstrip{padding:5px}.toolstrip button{padding:6px 8px}.stats .stat:nth-child(n+5){display:none}.bottom-strip .progress{display:none}.field-row{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<div id="app">
+<header class="app-header">
+  <div class="identity">
+    <div class="mark" aria-hidden="true">G</div>
+    <div><h1>GLYPHSCAPE</h1><p>Three-dimensional (3D) American Standard Code for Information Interchange (ASCII) world instrument</p></div>
+  </div>
+  <div class="workflow" aria-label="Primary workflow"><b>GENERATE</b><span>→</span><b>SHAPE</b><span>→</span><b>SIMULATE</b><span>→</span><b>OBSERVE</b><span>→</span><b>CAPTURE</b></div>
+  <div class="status-chip" title="Local autosave status"><span id="autosaveDot" class="autosave-dot"></span><span id="autosaveText">Ready</span></div>
+  <div class="version-chip" title="Application version">v1.0.0</div>
+  <div class="header-actions">
+    <button id="newBtn" class="mobile-keep" title="Start a fresh project">＋ <span class="label-hide">New</span></button>
+    <button id="projectsBtn" title="Open local projects">▣ <span class="label-hide">Projects</span></button>
+    <button id="undoBtn" class="icon" title="Undo (Control or Command + Z)" aria-label="Undo">↶</button>
+    <button id="redoBtn" class="icon" title="Redo (Control or Command + Shift + Z)" aria-label="Redo">↷</button>
+    <button id="themeBtn" class="icon mobile-keep" title="Toggle light and dark appearance" aria-label="Toggle appearance">◐</button>
+    <button id="helpBtn" class="icon mobile-keep" title="Help and application information" aria-label="Help">?</button>
+  </div>
+</header>
+<div id="shell" class="shell">
+  <aside class="panel left" aria-label="World controls">
+    <div class="panel-inner">
+      <div class="panel-head"><h2>World</h2><button id="closeLeft" class="icon small" aria-label="Close world controls">×</button></div>
+      <details class="section" open>
+        <summary>Project and generation</summary>
+        <div class="section-body">
+          <div class="field"><label for="projectName">Project name</label><input id="projectName" type="text" value="Untitled World" maxlength="80"></div>
+          <div class="field-row">
+            <div class="field"><label for="seedInput">Seed</label><input id="seedInput" type="text" value="green-shoe" maxlength="64"></div>
+            <div class="field"><label for="resolutionSelect">Resolution</label><select id="resolutionSelect"><option value="48">48 × 48</option><option value="64" selected>64 × 64</option><option value="80">80 × 80</option><option value="96">96 × 96</option></select></div>
+          </div>
+          <div class="field"><label for="presetSelect">Terrain character</label><select id="presetSelect"><option value="highlands">Highlands</option><option value="archipelago">Archipelago</option><option value="canyon">Canyonlands</option><option value="plateau">Plateau</option><option value="plains">Open Plains</option><option value="crater">Impact Basin</option></select></div>
+          <div class="field-row">
+            <div class="field"><label for="climateSelect">Climate</label><select id="climateSelect"><option value="temperate">Temperate</option><option value="arid">Arid</option><option value="tropical">Tropical</option><option value="polar">Polar</option><option value="continental">Continental</option></select></div>
+            <div class="field"><label for="settlementSelect">Settlements</label><select id="settlementSelect"><option value="0">None</option><option value="2">Sparse</option><option value="4" selected>Scattered</option><option value="7">Many</option></select></div>
+          </div>
+          <div class="field"><div class="field-inline"><label for="seaLevel">Sea level</label><span class="value" id="seaValue">34%</span></div><input id="seaLevel" type="range" min="0" max="70" value="34"></div>
+          <div class="field"><div class="field-inline"><label for="roughness">Roughness</label><span class="value" id="roughValue">58%</span></div><input id="roughness" type="range" min="10" max="100" value="58"></div>
+          <div class="button-row"><button id="generateBtn" class="primary">Generate world</button><button id="randomSeedBtn" title="Choose a random seed">Randomize</button></div>
+          <button id="freshStartBtn" class="small ghost" style="width:100%;margin-top:6px">Clear sample and start blank</button>
+          <p class="hint">Generation is deterministic: the same controls and seed produce the same world.</p>
+        </div>
+      </details>
+      <details class="section" open>
+        <summary>Simulation</summary>
+        <div class="section-body">
+          <div class="button-grid">
+            <button id="playBtn" class="primary">▶ Play</button><button id="stepBtn">Step one day</button>
+          </div>
+          <div class="field"><div class="field-inline"><label for="speedRange">Simulation speed</label><span class="value" id="speedValue">1×</span></div><input id="speedRange" type="range" min="1" max="8" step="1" value="1"></div>
+          <div class="field"><label for="eventSelect">Introduce event</label><select id="eventSelect"><option value="rainstorm">Rainstorm</option><option value="drought">Drought</option><option value="wildfire">Wildfire</option><option value="flood">Flood pulse</option><option value="meteor">Meteor impact</option><option value="snowfall">Cold front and snowfall</option><option value="regrow">Vegetation recovery</option><option value="settlement">Found settlement</option><option value="travelers">Add travelers</option><option value="clearfire">Suppress active fire</option></select></div>
+          <button id="applyEventBtn" style="width:100%;margin-top:8px">Apply event</button>
+          <div class="metric-grid">
+            <div class="metric"><span>Day</span><b id="dayMetric">0</b></div><div class="metric"><span>Season</span><b id="seasonMetric">Spring</b></div>
+            <div class="metric"><span>Weather</span><b id="weatherMetric">Clear</b></div><div class="metric"><span>Agents</span><b id="agentMetric">0</b></div>
+          </div>
+        </div>
+      </details>
+      <details class="section">
+        <summary>Visible layers</summary>
+        <div class="section-body" id="layerControls">
+          <div class="field field-inline"><input type="checkbox" id="layerTerrain" checked><label for="layerTerrain">Terrain and biomes</label></div>
+          <div class="field field-inline"><input type="checkbox" id="layerWater" checked><label for="layerWater">Water</label></div>
+          <div class="field field-inline"><input type="checkbox" id="layerVegetation" checked><label for="layerVegetation">Vegetation</label></div>
+          <div class="field field-inline"><input type="checkbox" id="layerStructures" checked><label for="layerStructures">Structures</label></div>
+          <div class="field field-inline"><input type="checkbox" id="layerAgents" checked><label for="layerAgents">Agents</label></div>
+          <div class="field field-inline"><input type="checkbox" id="layerWeather" checked><label for="layerWeather">Weather effects</label></div>
+        </div>
+      </details>
+      <details class="section">
+        <summary>World history</summary>
+        <div class="section-body"><div id="eventLog" class="log" aria-label="World event log"></div><button id="clearLogBtn" class="small ghost" style="width:100%;margin-top:6px">Clear log</button></div>
+      </details>
+    </div>
+  </aside>
+
+  <main class="workspace">
+    <nav class="toolstrip" aria-label="Workspace tools">
+      <div class="group"><span class="mode-label">MODE</span><button class="mode-btn small active" data-mode="orbit" title="Drag to rotate; wheel to zoom">Orbit</button><button class="mode-btn small" data-mode="inspect">Inspect</button><button class="mode-btn small" data-mode="sculpt">Sculpt</button><button class="mode-btn small" data-mode="paint">Paint</button></div>
+      <div class="group"><span class="mode-label">VIEW</span><button id="perspectiveBtn" class="segment small active">Perspective</button><button id="orthoBtn" class="segment small">Orthographic</button><button id="resetCameraBtn" class="small" title="Reset camera">Reset</button></div>
+      <div class="group"><button id="textPreviewBtn" class="small">ASCII text</button><button id="capturePngBtn" class="small">Capture</button></div>
+      <span class="spacer"></span><button id="toggleRightTop" class="small" title="Open or close inspector">Inspector</button>
+    </nav>
+    <section id="viewport" class="viewport" data-mode="orbit" aria-label="GLYPHSCAPE world viewport">
+      <canvas id="worldCanvas" tabindex="0" aria-label="Interactive three-dimensional ASCII world. Use Orbit, Inspect, Sculpt, or Paint mode."></canvas>
+      <div class="canvas-overlay" aria-hidden="true">
+        <div class="stats"><span class="stat" id="fpsStat">0 frames/second</span><span class="stat" id="worldStat">64 × 64</span><span class="stat" id="elevationStat">Elevation —</span><span class="stat" id="pointerModeStat">Orbit mode</span><span class="stat" id="projectionStat">Perspective</span></div>
+        <button id="sampleFlag" class="sample-flag" title="Remove the demonstration world">SAMPLE WORLD — CLEAR</button>
+        <div id="selectionCallout" class="selection-callout"></div>
+      </div>
+      <div id="emptyState" class="empty-state" hidden><div class="empty-card"><h2>Blank world</h2><p>Choose a terrain character and seed, then generate a world. No sample data remains in this project.</p><button id="emptyGenerateBtn" class="primary">Generate world</button></div></div>
+    </section>
+    <footer class="bottom-strip"><span id="statusMessage" class="message">Ready.</span><span class="grow"></span><span id="cellStatus">No cell selected</span><div class="progress" title="Simulation progress through current season"><i id="seasonProgress"></i></div></footer>
+    <button id="toggleLeft" class="edge-toggle left" aria-label="Open or close world controls">◀</button>
+    <button id="toggleRight" class="edge-toggle right" aria-label="Open or close inspector">▶</button>
+  </main>
+
+  <aside class="panel right" aria-label="Contextual inspector">
+    <div class="panel-inner">
+      <div class="panel-head"><h2>Inspector</h2><button id="closeRight" class="icon small" aria-label="Close inspector">×</button></div>
+      <details class="section" open>
+        <summary>Selected cell</summary>
+        <div class="section-body"><div id="selectionEmpty" class="hint">Use Inspect mode and choose a cell in the world.</div><div id="selectionDetails" hidden><div class="metric-grid"><div class="metric"><span>Coordinate</span><b id="selCoord">—</b></div><div class="metric"><span>Biome</span><b id="selBiome">—</b></div><div class="metric"><span>Elevation</span><b id="selElevation">—</b></div><div class="metric"><span>Water</span><b id="selWater">—</b></div><div class="metric"><span>Moisture</span><b id="selMoisture">—</b></div><div class="metric"><span>Vegetation</span><b id="selVegetation">—</b></div></div><button id="focusSelectionBtn" class="small" style="width:100%;margin-top:8px">Center camera here</button></div></div>
+      </details>
+      <details class="section" open>
+        <summary>Contextual tool</summary>
+        <div class="section-body">
+          <div id="orbitTool"><p class="hint">Drag to orbit. Hold <span class="kbd">Shift</span> while dragging to pan. Use the wheel or trackpad to zoom.</p></div>
+          <div id="inspectTool" hidden><p class="hint">Select the nearest visible world cell to review its conditions and coordinates.</p></div>
+          <div id="sculptTool" hidden>
+            <div class="field"><label for="sculptAction">Sculpt action</label><select id="sculptAction"><option value="raise">Raise</option><option value="lower">Lower</option><option value="smooth">Smooth</option></select></div>
+            <div class="field"><div class="field-inline"><label for="brushRadius">Brush radius</label><span class="value" id="radiusValue">3</span></div><input id="brushRadius" type="range" min="1" max="10" value="3"></div>
+            <div class="field"><div class="field-inline"><label for="brushStrength">Strength</label><span class="value" id="strengthValue">40%</span></div><input id="brushStrength" type="range" min="5" max="100" value="40"></div>
+          </div>
+          <div id="paintTool" hidden>
+            <div class="field"><label for="paintLayer">Paint property</label><select id="paintLayer"><option value="moisture">Moisture</option><option value="temperature">Temperature</option><option value="vegetation">Vegetation</option><option value="water">Surface water</option><option value="fire">Fire</option></select></div>
+            <div class="field"><div class="field-inline"><label for="paintValue">Target value</label><span class="value" id="paintValueLabel">70%</span></div><input id="paintValue" type="range" min="0" max="100" value="70"></div>
+            <div class="field"><div class="field-inline"><label for="paintRadius">Brush radius</label><span class="value" id="paintRadiusValue">3</span></div><input id="paintRadius" type="range" min="1" max="10" value="3"></div>
+          </div>
+        </div>
+      </details>
+      <details class="section" open>
+        <summary>Glyph rendering</summary>
+        <div class="section-body">
+          <div class="field"><label for="glyphSet">Glyph set</label><select id="glyphSet"><option value="classic">Classic terrain</option><option value="dense">Dense relief</option><option value="minimal">Minimal marks</option><option value="technical">Technical symbols</option></select></div>
+          <div class="field"><label for="paletteSelect">Palette</label><select id="paletteSelect"><option value="natural">Natural</option><option value="amber">Amber terminal</option><option value="green">Green phosphor</option><option value="mono">Monochrome</option><option value="ice">Ice and ember</option></select></div>
+          <div class="field"><div class="field-inline"><label for="detailRange">Render detail</label><span class="value" id="detailValue">100%</span></div><input id="detailRange" type="range" min="35" max="100" step="5" value="100"></div>
+          <div class="field field-inline"><input type="checkbox" id="colorToggle" checked><label for="colorToggle">Biome color</label></div>
+          <div class="field field-inline"><input type="checkbox" id="shadowToggle" checked><label for="shadowToggle">Depth shading</label></div>
+        </div>
+      </details>
+      <details class="section">
+        <summary>Camera</summary>
+        <div class="section-body">
+          <div class="field"><div class="field-inline"><label for="yawRange">Yaw</label><span class="value" id="yawValue">-38°</span></div><input id="yawRange" type="range" min="-180" max="180" value="-38"></div>
+          <div class="field"><div class="field-inline"><label for="pitchRange">Pitch</label><span class="value" id="pitchValue">46°</span></div><input id="pitchRange" type="range" min="10" max="82" value="46"></div>
+          <div class="field"><div class="field-inline"><label for="zoomRange">Zoom</label><span class="value" id="zoomValue">1.00×</span></div><input id="zoomRange" type="range" min="35" max="260" value="100"></div>
+        </div>
+      </details>
+      <details class="section" open>
+        <summary>Capture and project files</summary>
+        <div class="section-body">
+          <div class="button-grid"><button id="exportJsonBtn">Project — JavaScript Object Notation (JSON)</button><button id="importJsonBtn">Import project</button><button id="exportTextBtn">Plain text</button><button id="exportSvgBtn">Scalable Vector Graphics (SVG)</button><button id="exportPngBtn">Portable Network Graphics (PNG)</button><button id="exportHtmlBtn">Standalone HyperText Markup Language (HTML)</button></div>
+          <input id="importFile" class="sr-only" type="file" accept="application/json,.json">
+          <p class="hint">Exports are created locally. Nothing is uploaded or transmitted.</p>
+        </div>
+      </details>
+      <details class="section">
+        <summary>Biome legend</summary><div class="section-body"><div id="biomeLegend" class="legend"></div></div>
+      </details>
+    </div>
+  </aside>
+</div>
+</div>
+
+<dialog id="projectsDialog">
+  <div class="dialog-head"><h2>Local projects</h2><button class="icon" data-close-dialog="projectsDialog" aria-label="Close projects">×</button></div>
+  <div class="dialog-body"><p class="hint" style="margin-top:0">Projects are stored in this browser profile. Export project files for durable backups.</p><div id="projectList" class="project-list"></div></div>
+  <div class="dialog-foot"><button id="saveProjectBtn" class="primary">Save current project</button><button data-close-dialog="projectsDialog">Close</button></div>
+</dialog>
+<dialog id="textDialog">
+  <div class="dialog-head"><h2>Current ASCII frame</h2><button class="icon" data-close-dialog="textDialog" aria-label="Close text preview">×</button></div>
+  <div class="dialog-body"><pre id="asciiPreview" class="ascii-preview" tabindex="0"></pre></div>
+  <div class="dialog-foot"><button id="copyTextBtn">Copy text</button><button id="downloadTextDialogBtn" class="primary">Download text</button><button data-close-dialog="textDialog">Close</button></div>
+</dialog>
+<dialog id="helpDialog">
+  <div class="dialog-head"><h2>GLYPHSCAPE v1.0.0</h2><button class="icon" data-close-dialog="helpDialog" aria-label="Close help">×</button></div>
+  <div class="dialog-body">
+    <p>GLYPHSCAPE is a local-first instrument for creating and observing evolving three-dimensional glyph worlds. The primary workflow is <strong>GENERATE → SHAPE → SIMULATE → OBSERVE → CAPTURE</strong>.</p>
+    <div class="help-grid">
+      <section class="help-card"><h3>Navigation</h3><p>In Orbit mode, drag to rotate, hold <span class="kbd">Shift</span> and drag to pan, and use the wheel to zoom. Reset restores the default camera.</p></section>
+      <section class="help-card"><h3>Editing</h3><p>Inspect chooses a cell. Sculpt changes elevation. Paint changes moisture, temperature, vegetation, water, or fire. Each completed stroke is undoable.</p></section>
+      <section class="help-card"><h3>Simulation</h3><p>Play advances fixed world steps. Water redistributes, plants grow or decline, fire spreads and exhausts fuel, weather changes, and agents travel.</p></section>
+      <section class="help-card"><h3>Privacy and storage</h3><p>All processing occurs locally. No account, telemetry, advertising, behavioral tracking, or silent network transmission is included. Autosave uses local browser storage.</p></section>
+      <section class="help-card"><h3>Keyboard</h3><p><span class="kbd">O</span> Orbit · <span class="kbd">I</span> Inspect · <span class="kbd">S</span> Sculpt · <span class="kbd">P</span> Paint · <span class="kbd">Space</span> Play or pause · <span class="kbd">Ctrl/⌘ Z</span> Undo · <span class="kbd">Ctrl/⌘ Shift Z</span> Redo.</p></section>
+      <section class="help-card"><h3>Backups</h3><p>Use Project — JavaScript Object Notation (JSON) to move work between browsers or retain a durable copy outside local browser storage.</p></section>
+    </div>
+  </div>
+  <div class="dialog-foot"><button data-close-dialog="helpDialog" class="primary">Done</button></div>
+</dialog>
+<div id="toastRegion" class="toast-region" aria-live="polite" aria-atomic="false"></div>
+<script>
+'use strict';
+(() => {
+const VERSION='1.0.0';
+const SCHEMA_VERSION=1;
+const ACTIVE_KEY='glyphscape.active.v1';
+const SETTINGS_KEY='glyphscape.settings.v1';
+const DB_NAME='glyphscape-projects-v1';
+const STORE_NAME='projects';
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const smooth=t=>t*t*(3-2*t);
+const mod=(n,m)=>((n%m)+m)%m;
+const nowISO=()=>new Date().toISOString();
+const escapeHtml=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>`${Date.now().toString(36)}-${Math.random().toString(36).slice(2,9)}`;
+function hashString(str){let h=2166136261>>>0;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+function mulberry32(seed){return function(){let t=seed+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
+function hash2(x,y,seed){let h=Math.imul(x|0,374761393)+Math.imul(y|0,668265263)+Math.imul(seed|0,1442695041);h=(h^(h>>>13));h=Math.imul(h,1274126177);return((h^(h>>>16))>>>0)/4294967295}
+function valueNoise(x,y,seed){const x0=Math.floor(x),y0=Math.floor(y),tx=smooth(x-x0),ty=smooth(y-y0);const a=hash2(x0,y0,seed),b=hash2(x0+1,y0,seed),c=hash2(x0,y0+1,seed),d=hash2(x0+1,y0+1,seed);return lerp(lerp(a,b,tx),lerp(c,d,tx),ty)}
+function fbm(x,y,seed,octaves=5){let sum=0,amp=.55,freq=1,norm=0;for(let o=0;o<octaves;o++){sum+=valueNoise(x*freq,y*freq,seed+o*1013)*amp;norm+=amp;amp*=.5;freq*=2.03}return sum/norm}
+function ridged(x,y,seed){return 1-Math.abs(fbm(x,y,seed,5)*2-1)}
+function downloadBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1200)}
+function safeName(name){return(String(name||'glyphscape-world').trim().replace(/[^a-z0-9._-]+/gi,'-').replace(/^-+|-+$/g,'')||'glyphscape-world').slice(0,80)}
+function formatDate(iso){try{return new Intl.DateTimeFormat(undefined,{dateStyle:'medium',timeStyle:'short'}).format(new Date(iso))}catch{return iso}}
+function bytesToBase64(typed){const bytes=new Uint8Array(typed.buffer,typed.byteOffset,typed.byteLength);let s='';const chunk=0x8000;for(let i=0;i<bytes.length;i+=chunk)s+=String.fromCharCode(...bytes.subarray(i,i+chunk));return btoa(s)}
+function base64ToTyped(str,Ctor){const bin=atob(str),bytes=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);return new Ctor(bytes.buffer)}
+
+const BIOMES=[
+  {name:'Ocean',glyph:'≈',color:'#4d9ad4'},
+  {name:'Beach',glyph:'.',color:'#d9c78e'},
+  {name:'Desert',glyph:':',color:'#c99152'},
+  {name:'Grassland',glyph:',',color:'#88b45f'},
+  {name:'Forest',glyph:'♠',color:'#4a8a4c'},
+  {name:'Rainforest',glyph:'♣',color:'#2d7651'},
+  {name:'Tundra',glyph:'·',color:'#aeb7a2'},
+  {name:'Alpine',glyph:'▲',color:'#9b9f98'},
+  {name:'Marsh',glyph:';',color:'#5a9c82'},
+  {name:'Scorched',glyph:'x',color:'#87594b'},
+  {name:'Snow',glyph:'*',color:'#e6f2f6'}
+];
+const GLYPH_RAMPS={classic:' .,:;irsXA253hMHGS#9B&@',dense:'·.:,;i1tfLCG08@',minimal:' .-+=#@',technical:' ._-=+xX#█'};
+const PALETTES={
+  natural:null,
+  amber:{terrain:'#e7a83e',water:'#ffd15c',vegetation:'#d9982e',structure:'#fff1bf',agent:'#fff7d6',fire:'#ff6648',weather:'#ffd982'},
+  green:{terrain:'#70d47d',water:'#9effb1',vegetation:'#48b85b',structure:'#c8ffd0',agent:'#e8ffeb',fire:'#d7ff55',weather:'#a0f3a8'},
+  mono:{terrain:'#d7ddd8',water:'#eef2ef',vegetation:'#c3cbc5',structure:'#ffffff',agent:'#ffffff',fire:'#ffffff',weather:'#dae0db'},
+  ice:{terrain:'#78a7d2',water:'#66c8e7',vegetation:'#87b9b3',structure:'#d9f6ff',agent:'#ffffff',fire:'#ff6a4c',weather:'#b8e9ff'}
+};
+const SEASONS=['Spring','Summer','Autumn','Winter'];
+const WEATHER=['Clear','Cloudy','Rain','Wind','Fog','Snow'];
+
+function blankWorld(n=64){const len=n*n;return{n,height:new Float32Array(len),moisture:new Float32Array(len),temperature:new Float32Array(len),water:new Float32Array(len),vegetation:new Float32Array(len),fire:new Float32Array(len),biome:new Uint8Array(len),structures:[],agents:[],day:0,weather:'Clear',weatherDays:4,isBlank:true}}
+const state={
+  project:{id:uid(),name:'Untitled World',createdAt:nowISO(),updatedAt:nowISO(),schemaVersion:SCHEMA_VERSION,isSample:true},
+  generation:{seed:'green-shoe',preset:'highlands',resolution:64,seaLevel:.34,roughness:.58,climate:'temperate',settlements:4},
+  world:blankWorld(64),
+  view:{yaw:-38*Math.PI/180,pitch:46*Math.PI/180,zoom:1,panX:0,panY:0,projection:'perspective',glyphSet:'classic',palette:'natural',detail:1,color:true,shadow:true,layers:{terrain:true,water:true,vegetation:true,structures:true,agents:true,weather:true}},
+  tool:{mode:'orbit',sculptAction:'raise',radius:3,strength:.4,paintLayer:'moisture',paintValue:.7,paintRadius:3},
+  sim:{playing:false,speed:1,last:0,accumulator:0,stepMs:550},
+  selection:null,history:[],future:[],eventLog:[],projected:[],lastAscii:'',lastRenderAt:0,fps:0,needsRender:true,strokeChanged:false,strokeSnapshot:null,
+  ui:{leftOpen:true,rightOpen:true,theme:'dark'},
+  db:null,storageMode:'localStorage',saveTimer:null,saveState:'ready'
+};
+
+function toast(title,message='',kind='info',duration=3600){const region=$('#toastRegion');const el=document.createElement('div');el.className=`toast ${kind==='error'?'error':kind==='warn'?'warn':''}`;el.innerHTML=`<b>${escapeHtml(title)}</b>${message?`<span>${escapeHtml(message)}</span>`:''}`;region.appendChild(el);setTimeout(()=>el.remove(),duration)}
+function setStatus(message){$('#statusMessage').textContent=message}
+function logEvent(message,kind=''){state.eventLog.unshift({at:nowISO(),day:Math.floor(state.world.day),message,kind});state.eventLog=state.eventLog.slice(0,80);renderLog()}
+function renderLog(){const el=$('#eventLog');if(!state.eventLog.length){el.innerHTML='<div class="log-entry">No events recorded.</div>';return}el.innerHTML=state.eventLog.map(e=>`<div class="log-entry ${e.kind||''}"><time>D${e.day}</time>${escapeHtml(e.message)}</div>`).join('')}
+function setAutosave(status,text){state.saveState=status;const dot=$('#autosaveDot'),label=$('#autosaveText');dot.className=`autosave-dot ${status}`;label.textContent=text||({saving:'Saving…',saved:'Saved locally',error:'Save failed',ready:'Ready'}[status]||status)}
+
+async function openDB(){if(!('indexedDB'in window))return null;return new Promise(resolve=>{const req=indexedDB.open(DB_NAME,1);req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(STORE_NAME))db.createObjectStore(STORE_NAME,{keyPath:'project.id'})};req.onsuccess=()=>resolve(req.result);req.onerror=()=>resolve(null)})}
+async function dbPut(record){if(!state.db)return false;return new Promise(resolve=>{try{const tx=state.db.transaction(STORE_NAME,'readwrite');tx.objectStore(STORE_NAME).put(record);tx.oncomplete=()=>resolve(true);tx.onerror=()=>resolve(false)}catch{resolve(false)}})}
+async function dbGet(id){if(!state.db)return null;return new Promise(resolve=>{try{const r=state.db.transaction(STORE_NAME).objectStore(STORE_NAME).get(id);r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>resolve(null)}catch{resolve(null)}})}
+async function dbList(){if(!state.db)return[];return new Promise(resolve=>{try{const r=state.db.transaction(STORE_NAME).objectStore(STORE_NAME).getAll();r.onsuccess=()=>resolve((r.result||[]).sort((a,b)=>String(b.project.updatedAt).localeCompare(String(a.project.updatedAt))));r.onerror=()=>resolve([])}catch{resolve([])}})}
+async function dbDelete(id){if(!state.db)return false;return new Promise(resolve=>{try{const tx=state.db.transaction(STORE_NAME,'readwrite');tx.objectStore(STORE_NAME).delete(id);tx.oncomplete=()=>resolve(true);tx.onerror=()=>resolve(false)}catch{resolve(false)}})}
+
+function serializeWorld(world=state.world){return{n:world.n,height:bytesToBase64(world.height),moisture:bytesToBase64(world.moisture),temperature:bytesToBase64(world.temperature),water:bytesToBase64(world.water),vegetation:bytesToBase64(world.vegetation),fire:bytesToBase64(world.fire),biome:bytesToBase64(world.biome),structures:world.structures.map(x=>({...x})),agents:world.agents.map(x=>({...x})),day:world.day,weather:world.weather,weatherDays:world.weatherDays,isBlank:world.isBlank}}
+function deserializeWorld(data){const n=Number(data.n)||64,len=n*n;const safe=(key,Ctor)=>{try{const v=base64ToTyped(data[key],Ctor);if(v.length===len)return v}catch{}return new Ctor(len)};return{n,height:safe('height',Float32Array),moisture:safe('moisture',Float32Array),temperature:safe('temperature',Float32Array),water:safe('water',Float32Array),vegetation:safe('vegetation',Float32Array),fire:safe('fire',Float32Array),biome:safe('biome',Uint8Array),structures:Array.isArray(data.structures)?data.structures.map(x=>({...x})):[],agents:Array.isArray(data.agents)?data.agents.map(x=>({...x})):[],day:Number(data.day)||0,weather:String(data.weather||'Clear'),weatherDays:Number(data.weatherDays)||4,isBlank:!!data.isBlank}}
+function makeRecord(){state.project.name=($('#projectName').value||'Untitled World').trim();state.project.updatedAt=nowISO();return{format:'GLYPHSCAPE_PROJECT',version:VERSION,schemaVersion:SCHEMA_VERSION,project:{...state.project},generation:{...state.generation},view:{...state.view,layers:{...state.view.layers}},tool:{...state.tool},world:serializeWorld(),eventLog:state.eventLog.slice(0,80)}}
+function migrateRecord(record){if(!record||record.format!=='GLYPHSCAPE_PROJECT')throw new Error('This file is not a GLYPHSCAPE project.');const r=structuredClone(record);r.schemaVersion=Number(r.schemaVersion)||1;return r}
+function applyRecord(raw,{preserveHistory=false}={}){const r=migrateRecord(raw);state.project={...state.project,...r.project,schemaVersion:SCHEMA_VERSION};state.generation={...state.generation,...r.generation};state.view={...state.view,...r.view,layers:{...state.view.layers,...(r.view?.layers||{})}};state.tool={...state.tool,...r.tool};state.world=deserializeWorld(r.world||{});state.eventLog=Array.isArray(r.eventLog)?r.eventLog:[];state.selection=null;if(!preserveHistory){state.history=[];state.future=[]}syncControlsFromState();updateAllUI();requestRender();setStatus(`Loaded ${state.project.name}.`)}
+function scheduleSave(){clearTimeout(state.saveTimer);setAutosave('saving');state.saveTimer=setTimeout(saveActive,420)}
+async function saveActive(){try{const record=makeRecord();localStorage.setItem(ACTIVE_KEY,JSON.stringify(record));localStorage.setItem(SETTINGS_KEY,JSON.stringify({theme:state.ui.theme,leftOpen:state.ui.leftOpen,rightOpen:state.ui.rightOpen}));const ok=await dbPut(record);state.storageMode=ok?'IndexedDB and local fallback':'localStorage';setAutosave('saved');setTimeout(()=>{if(state.saveState==='saved')setAutosave('saved','Saved locally')},800)}catch(error){setAutosave('error');toast('Autosave failed',error.message,'error',6000)}}
+function restoreActive(){try{const raw=localStorage.getItem(ACTIVE_KEY);if(!raw)return false;applyRecord(JSON.parse(raw));return true}catch(error){toast('Recovery could not complete','The last local state was not readable. A sample world was loaded instead.','warn',6500);return false}}
+function pushHistory(label='Edit'){try{state.history.push({label,world:serializeWorld(),selection:state.selection?{...state.selection}:null});if(state.history.length>32)state.history.shift();state.future=[];updateHistoryButtons()}catch(error){console.warn('History snapshot failed',error)}}
+function restoreSnapshot(snap){if(!snap)return;state.world=deserializeWorld(snap.world);state.selection=snap.selection;updateSelectionUI();updateMetrics();requestRender();scheduleSave()}
+function undo(){const snap=state.history.pop();if(!snap)return;state.future.push({label:snap.label,world:serializeWorld(),selection:state.selection?{...state.selection}:null});restoreSnapshot(snap);setStatus(`Undid ${snap.label}.`);updateHistoryButtons()}
+function redo(){const snap=state.future.pop();if(!snap)return;state.history.push({label:snap.label,world:serializeWorld(),selection:state.selection?{...state.selection}:null});restoreSnapshot(snap);setStatus(`Redid ${snap.label}.`);updateHistoryButtons()}
+function updateHistoryButtons(){$('#undoBtn').disabled=!state.history.length;$('#redoBtn').disabled=!state.future.length}
+
+function climateParams(kind){return({temperate:{temp:.58,moist:.56},arid:{temp:.74,moist:.23},tropical:{temp:.78,moist:.78},polar:{temp:.18,moist:.5},continental:{temp:.46,moist:.44}}[kind]||{temp:.58,moist:.56})}
+function generateWorld({sample=false}={}){
+  const g=state.generation,n=g.resolution,len=n*n,seed=hashString(`${g.seed}|${g.preset}|${g.climate}|${n}|${g.roughness}`),rng=mulberry32(seed);
+  pushHistory('world generation');
+  const world=blankWorld(n),rough=g.roughness,cp=climateParams(g.climate);world.isBlank=false;
+  let min=Infinity,max=-Infinity;
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++){
+    const i=y*n+x,nx=x/(n-1)*2-1,ny=y/(n-1)*2-1,r=Math.hypot(nx,ny),angle=Math.atan2(ny,nx);
+    const base=fbm(x/n*3.4,y/n*3.4,seed,6),ridge=ridged(x/n*2.8,y/n*2.8,seed+991),detail=fbm(x/n*10,y/n*10,seed+2281,3);
+    let h=.5;
+    switch(g.preset){
+      case'archipelago':{const islands=clamp(1-r*.82)+Math.sin(angle*5+r*12)*.065;h=base*.5+ridge*.18+islands*.42-.22;break}
+      case'canyon':{const channels=Math.abs(Math.sin(nx*5.4+fbm(nx*2,ny*2,seed+4)*3));h=.77-channels*.45+ridge*.24+detail*.05;break}
+      case'plateau':{const p=clamp((base-.38)*2.2);h=Math.round(p*5)/5*.72+ridge*.17+detail*.05;break}
+      case'plains':h=.36+base*.26+detail*.07+ridge*.07;break;
+      case'crater':{const rim=Math.exp(-Math.pow((r-.46)*10,2))*.42,center=Math.exp(-r*r*9)*.35;h=.42+base*.25+rim-center+detail*.04;break}
+      default:{const mountain=Math.pow(ridge,1.55);h=base*.35+mountain*.52+detail*.08-clamp(r-.78)*.34;break}
+    }
+    h=lerp(.5,h,rough);world.height[i]=h;min=Math.min(min,h);max=Math.max(max,h)
+  }
+  const span=max-min||1;for(let i=0;i<len;i++)world.height[i]=clamp((world.height[i]-min)/span);
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++){
+    const i=y*n+x,lat=Math.abs(y/(n-1)*2-1),h=world.height[i];
+    const mNoise=fbm(x/n*4.1,y/n*4.1,seed+5003,5),tNoise=fbm(x/n*3.2,y/n*3.2,seed+7001,4);
+    world.moisture[i]=clamp(cp.moist*.65+mNoise*.45-h*.12);
+    world.temperature[i]=clamp(cp.temp*.78+tNoise*.24-lat*.28-Math.max(0,h-.55)*.5);
+    world.water[i]=h<g.seaLevel?clamp((g.seaLevel-h)*4.2):0;
+    world.vegetation[i]=0;
+  }
+  deriveBiomes(world,true);
+  placeSettlements(world,Number(g.settlements)||0,rng);
+  world.weather='Clear';world.weatherDays=3+Math.floor(rng()*5);state.world=world;state.project.isSample=sample;state.selection=null;state.sim.playing=false;
+  logEvent(`Generated ${g.preset} world from seed “${g.seed}”.`);syncControlsFromState();updateAllUI();requestRender();scheduleSave();setStatus(`Generated ${n} × ${n} deterministic world.`);toast('World generated',`${n} × ${n} cells from seed “${g.seed}”.`)
+}
+function deriveBiomes(world=state.world,initializeVegetation=false){const n=world.n,sea=state.generation.seaLevel;for(let i=0;i<n*n;i++){
+  const h=world.height[i],m=world.moisture[i],t=world.temperature[i],w=world.water[i];let b=3;
+  if(h<sea||w>.62)b=0;else if(h<sea+.025)b=1;else if(world.fire[i]>.15)b=9;else if(t<.17)b=10;else if(h>.82)b=t<.42?10:7;else if(w>.12&&m>.58)b=8;else if(t>.68&&m<.32)b=2;else if(t>.67&&m>.7)b=5;else if(m>.58)b=4;else if(t<.35)b=6;else b=3;
+  world.biome[i]=b;if(initializeVegetation){const target=[0,.02,.06,.55,.78,.94,.18,.06,.58,0,.03][b];world.vegetation[i]=clamp(target*(.75+hash2(i%n,Math.floor(i/n),hashString(state.generation.seed)+19)*.32))}
+}}
+function findLandCell(world,rng,minDist=0,existing=[]){const n=world.n,sea=state.generation.seaLevel;for(let tries=0;tries<1500;tries++){const x=2+Math.floor(rng()*(n-4)),y=2+Math.floor(rng()*(n-4)),i=y*n+x;if(world.height[i]<=sea+.05||world.height[i]>.78||world.biome[i]===2||world.biome[i]===7||world.biome[i]===10)continue;if(existing.some(p=>Math.hypot(p.x-x,p.y-y)<minDist))continue;return{x,y}}return null}
+function placeSettlements(world,count,rng){for(let s=0;s<count;s++){const p=findLandCell(world,rng,world.n*.16,world.structures);if(!p)continue;world.structures.push({id:uid(),x:p.x,y:p.y,type:s%3===0?'tower':'village',name:`Settlement ${s+1}`});const agentCount=2+Math.floor(rng()*4);for(let a=0;a<agentCount;a++)world.agents.push({id:uid(),x:p.x+rng()-.5,y:p.y+rng()-.5,energy:.6+rng()*.4,name:`Traveler ${world.agents.length+1}`,heading:rng()*Math.PI*2})}}
+
+function idx(x,y,n=state.world.n){return y*n+x}
+function slopeAt(x,y,world=state.world){const n=world.n,x0=Math.max(0,x-1),x1=Math.min(n-1,x+1),y0=Math.max(0,y-1),y1=Math.min(n-1,y+1);return Math.hypot(world.height[idx(x1,y,n)]-world.height[idx(x0,y,n)],world.height[idx(x,y1,n)]-world.height[idx(x,y0,n)])*.5}
+function setWeather(name,days=4){state.world.weather=name;state.world.weatherDays=days;logEvent(`Weather changed to ${name.toLowerCase()}.`);updateMetrics();requestRender()}
+function chooseWeather(){const seed=hashString(`${state.generation.seed}|weather|${Math.floor(state.world.day/4)}`),r=mulberry32(seed)(),season=Math.floor(state.world.day/90)%4,climate=state.generation.climate;let options=['Clear','Clear','Cloudy','Wind','Rain','Fog'];if(season===3||climate==='polar')options.push('Snow','Snow');if(climate==='arid')options=['Clear','Clear','Clear','Wind','Cloudy','Rain'];if(climate==='tropical')options=['Rain','Rain','Cloudy','Clear','Fog','Wind'];setWeather(options[Math.floor(r*options.length)],3+Math.floor(r*6))}
+function simulationStep(days=1){const w=state.world;if(w.isBlank)return;const n=w.n,len=n*n;for(let dayStep=0;dayStep<days;dayStep++){
+  w.day+=1;w.weatherDays-=1;if(w.weatherDays<=0)chooseWeather();
+  const season=Math.floor(w.day/90)%4;const rain=w.weather==='Rain'?.022:w.weather==='Snow'?.008:0;const dry=state.generation.climate==='arid'?.0045:.0025;const tempSeason=Math.sin((w.day/360)*Math.PI*2-Math.PI/2)*.07;
+  const nextWater=new Float32Array(w.water);const nextFire=new Float32Array(w.fire);
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++){
+    const i=idx(x,y,n);w.temperature[i]=clamp(w.temperature[i]*.992+(climateParams(state.generation.climate).temp+tempSeason)*.008);w.moisture[i]=clamp(w.moisture[i]+rain*(.65+hash2(x,y,Math.floor(w.day))*.7)-dry*(.6+w.temperature[i]));
+    if(rain)nextWater[i]=clamp(nextWater[i]+rain*Math.max(0,.9-w.height[i])*.65);
+    if(w.water[i]>.004){const level=w.height[i]+w.water[i]*.35;let lowest=-1,lowestLevel=level;const neighbors=[[x-1,y],[x+1,y],[x,y-1],[x,y+1]];for(const[qx,qy]of neighbors){if(qx<0||qy<0||qx>=n||qy>=n)continue;const qi=idx(qx,qy,n),ql=w.height[qi]+w.water[qi]*.35;if(ql<lowestLevel){lowest=qi;lowestLevel=ql}}if(lowest>=0){const flow=Math.min(w.water[i]*.16,(level-lowestLevel)*.12);nextWater[i]-=flow;nextWater[lowest]+=flow}}
+    nextWater[i]=clamp(nextWater[i]-(w.temperature[i]*.0015));
+    const biomeTarget=[0,.03,.05,.55,.79,.95,.2,.06,.62,0,.02][w.biome[i]];const health=clamp(w.moisture[i]*1.25)*(1-Math.abs(w.temperature[i]-.55)*.75);if(w.fire[i]>.04){w.vegetation[i]=clamp(w.vegetation[i]-w.fire[i]*.11);nextFire[i]=clamp(w.fire[i]-.045-w.moisture[i]*.018);if(w.vegetation[i]>.18){for(const[qx,qy]of [[x-1,y],[x+1,y],[x,y-1],[x,y+1]]){if(qx<0||qy<0||qx>=n||qy>=n)continue;const qi=idx(qx,qy,n);if(w.vegetation[qi]>.35&&w.moisture[qi]<.62&&hash2(qx,qy,Math.floor(w.day)*31+i) < w.fire[i]*.14)nextFire[qi]=Math.max(nextFire[qi],.45)}}}else{w.vegetation[i]=clamp(w.vegetation[i]+(biomeTarget*health-w.vegetation[i])*.0055)}
+  }
+  w.water=nextWater;w.fire=nextFire;
+  for(const a of w.agents){a.heading+=(hash2(Math.floor(a.x*9),Math.floor(a.y*9),Math.floor(w.day)+hashString(a.id))-.5)*.8;let nx=clamp(a.x+Math.cos(a.heading)*.18,1,n-2),ny=clamp(a.y+Math.sin(a.heading)*.18,1,n-2),ni=idx(Math.round(nx),Math.round(ny),n);if(w.height[ni]>state.generation.seaLevel+.015&&w.height[ni]<.86&&w.fire[ni]<.2){a.x=nx;a.y=ny}else a.heading+=Math.PI*.7;a.energy=clamp(a.energy+(.55-w.vegetation[ni])*.002,.2,1)}
+  if(Math.floor(w.day)%8===0)deriveBiomes(w,false)
+ }
+ updateMetrics();updateSelectionUI();requestRender();scheduleSave()
+}
+function applyEvent(type){const w=state.world;if(w.isBlank){toast('Generate a world first','Events need a world model to affect.','warn');return}pushHistory(`event: ${type}`);const n=w.n,rng=mulberry32(hashString(`${state.generation.seed}|${type}|${w.day}|${Date.now()}`));let message='';
+ switch(type){
+  case'rainstorm':for(let i=0;i<n*n;i++){w.moisture[i]=clamp(w.moisture[i]+.18);if(w.height[i]<state.generation.seaLevel+.18)w.water[i]=clamp(w.water[i]+.055)}w.weather='Rain';w.weatherDays=7;message='A sustained rainstorm crossed the world.';break;
+  case'drought':for(let i=0;i<n*n;i++){w.moisture[i]=clamp(w.moisture[i]-.28);w.water[i]*=.72;w.vegetation[i]*=.94}w.weather='Clear';w.weatherDays=12;message='Drought reduced moisture and surface water.';break;
+  case'wildfire':{let candidates=[];for(let i=0;i<n*n;i++)if(w.vegetation[i]>.5&&w.water[i]<.08)candidates.push(i);const center=candidates.length?candidates[Math.floor(rng()*candidates.length)]:Math.floor(rng()*n*n);for(let oy=-3;oy<=3;oy++)for(let ox=-3;ox<=3;ox++){const x=center%n+ox,y=Math.floor(center/n)+oy;if(x>=0&&y>=0&&x<n&&y<n&&Math.hypot(ox,oy)<=3)w.fire[idx(x,y,n)]=Math.max(w.fire[idx(x,y,n)],clamp(1-Math.hypot(ox,oy)/4))}message='Wildfire ignited in a vegetated region.';break}
+  case'flood':for(let i=0;i<n*n;i++)if(w.height[i]<state.generation.seaLevel+.2)w.water[i]=clamp(w.water[i]+.16*(1-w.height[i]));w.weather='Rain';w.weatherDays=4;message='A flood pulse filled low ground and channels.';break;
+  case'meteor':{const cx=8+Math.floor(rng()*(n-16)),cy=8+Math.floor(rng()*(n-16)),radius=Math.max(4,Math.round(n*.07));for(let y=Math.max(0,cy-radius-2);y<Math.min(n,cy+radius+3);y++)for(let x=Math.max(0,cx-radius-2);x<Math.min(n,cx+radius+3);x++){const d=Math.hypot(x-cx,y-cy),i=idx(x,y,n);if(d<radius)w.height[i]=clamp(w.height[i]-(1-d/radius)*.28);else if(d<radius+2)w.height[i]=clamp(w.height[i]+(1-(d-radius)/2)*.14);if(d<radius+3){w.fire[i]=Math.max(w.fire[i],clamp(1-d/(radius+3)));w.vegetation[i]*=.12}}message=`Meteor impact formed a basin near ${cx}, ${cy}.`;break}
+  case'snowfall':for(let i=0;i<n*n;i++)w.temperature[i]=clamp(w.temperature[i]-.17);w.weather='Snow';w.weatherDays=9;deriveBiomes(w,false);message='A cold front brought prolonged snowfall.';break;
+  case'regrow':for(let i=0;i<n*n;i++){w.moisture[i]=clamp(w.moisture[i]+.08);w.vegetation[i]=clamp(w.vegetation[i]+.24*(1-w.fire[i]));w.fire[i]*=.2}deriveBiomes(w,false);message='Vegetation recovery accelerated across suitable ground.';break;
+  case'settlement':{const p=findLandCell(w,rng,n*.12,w.structures);if(p){w.structures.push({id:uid(),x:p.x,y:p.y,type:'village',name:`Settlement ${w.structures.length+1}`});for(let a=0;a<3;a++)w.agents.push({id:uid(),x:p.x+rng()-.5,y:p.y+rng()-.5,energy:.8,name:`Resident ${w.agents.length+1}`,heading:rng()*Math.PI*2});message=`A settlement was founded near ${p.x}, ${p.y}.`}else message='No suitable settlement site was found.';break}
+  case'travelers':for(let a=0;a<6;a++){const p=findLandCell(w,rng,0,[]);if(p)w.agents.push({id:uid(),x:p.x,y:p.y,energy:.65+rng()*.35,name:`Traveler ${w.agents.length+1}`,heading:rng()*Math.PI*2})}message='New travelers entered the world.';break;
+  case'clearfire':for(let i=0;i<n*n;i++)w.fire[i]=0;message='Active fires were suppressed.';break;
+ }
+ deriveBiomes(w,false);logEvent(message,type==='wildfire'||type==='meteor'?'warn':'');updateAllUI();requestRender();scheduleSave();setStatus(message);toast('World event',message)
+}
+
+const canvas=$('#worldCanvas'),ctx=canvas.getContext('2d',{alpha:false});let dpr=1,renderQueued=false,drag=null;
+function requestRender(){state.needsRender=true;if(!renderQueued){renderQueued=true;requestAnimationFrame(()=>{renderQueued=false;render()})}}
+function resizeCanvas(){const rect=canvas.getBoundingClientRect(),nextDpr=Math.min(2,window.devicePixelRatio||1),w=Math.max(2,Math.floor(rect.width*nextDpr)),h=Math.max(2,Math.floor(rect.height*nextDpr));if(canvas.width!==w||canvas.height!==h||dpr!==nextDpr){canvas.width=w;canvas.height=h;dpr=nextDpr;state.needsRender=true}}
+function projectCell(x,y,h,rect){const n=state.world.n,cx=(n-1)/2,cz=(n-1)/2,wx=x-cx,wz=y-cz,cy=Math.cos(state.view.yaw),sy=Math.sin(state.view.yaw),cp=Math.cos(state.view.pitch),sp=Math.sin(state.view.pitch);const rx=wx*cy-wz*sy,rz=wx*sy+wz*cy,wy=(h-state.generation.seaLevel)*n*.62;const py=wy*cp-rz*sp,depth=wy*sp+rz*cp;const base=Math.min(rect.width,rect.height)/(n*.92),persp=state.view.projection==='perspective'?clamp(1.4/(1.4+depth/n*.48),.48,2.4):1,scale=base*state.view.zoom*persp;return{x:rect.width/2+state.view.panX+rx*scale,y:rect.height/2+state.view.panY-py*scale,depth,scale}}
+function glyphFor(i,x,y){const w=state.world,b=w.biome[i],h=w.height[i],s=slopeAt(x,y,w);if(state.view.layers.water&&(w.water[i]>.08||b===0))return w.weather==='Wind'?'≋':'≈';if(w.fire[i]>.08)return w.fire[i]>.55?'✦':'*';if(state.view.glyphSet==='classic'){
+  if(state.view.layers.vegetation&&w.vegetation[i]>.62)return b===5?'♣':'♠';if(b===10)return'*';if(b===7)return'▲';if(b===8)return';';if(b===2)return':';if(b===1)return'.';
+ }
+ const ramp=GLYPH_RAMPS[state.view.glyphSet]||GLYPH_RAMPS.classic;const relief=clamp(h*.78+s*2.4+w.vegetation[i]*.12);return ramp[Math.min(ramp.length-1,Math.floor(relief*(ramp.length-1)))]
+}
+function colorFor(i,depth){const w=state.world,p=PALETTES[state.view.palette];if(p){if(w.fire[i]>.08)return p.fire;if(state.view.layers.water&&(w.water[i]>.08||w.biome[i]===0))return p.water;if(state.view.layers.vegetation&&w.vegetation[i]>.62)return p.vegetation;return p.terrain}if(!state.view.color)return'#d8ded9';let c=BIOMES[w.biome[i]]?.color||'#b9c3b9';if(state.view.shadow){const shade=clamp(.84-depth/(w.n*2.7),.45,1.08);c=shadeHex(c,shade)}return c}
+function shadeHex(hex,f){const m=/^#([0-9a-f]{6})$/i.exec(hex);if(!m)return hex;const n=parseInt(m[1],16),r=clamp(((n>>16)&255)*f,0,255),g=clamp(((n>>8)&255)*f,0,255),b=clamp((n&255)*f,0,255);return`rgb(${r|0},${g|0},${b|0})`}
+function render(){resizeCanvas();if(!state.needsRender&&!state.sim.playing)return;state.needsRender=false;const rect={width:canvas.width/dpr,height:canvas.height/dpr};ctx.setTransform(dpr,0,0,dpr,0,0);const bg=state.ui.theme==='light'?'#e9eee8':'#060807';ctx.fillStyle=bg;ctx.fillRect(0,0,rect.width,rect.height);state.projected=[];
+ if(state.world.isBlank){drawBlankGrid(rect);state.lastAscii='';return}
+ const w=state.world,n=w.n,detail=state.view.detail,step=Math.max(1,Math.round(1/detail)),points=[];let minH=1,maxH=0;
+ for(let y=0;y<n;y+=step)for(let x=0;x<n;x+=step){const i=idx(x,y,n),h=w.height[i];minH=Math.min(minH,h);maxH=Math.max(maxH,h);const p=projectCell(x,y,h,rect);if(p.x<-30||p.y<-30||p.x>rect.width+30||p.y>rect.height+30)continue;points.push({x,y,i,...p,h})}
+ points.sort((a,b)=>b.depth-a.depth);const baseFont=clamp(Math.min(rect.width,rect.height)/(n*.86)*state.view.zoom*1.22,5,23);ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`700 ${baseFont}px ${getComputedStyle(document.documentElement).getPropertyValue('--mono')}`;
+ for(const p of points){if(!state.view.layers.terrain&&!(state.view.layers.water&&w.water[p.i]>.08))continue;ctx.globalAlpha=clamp(.64+p.scale/(Math.min(rect.width,rect.height)/n)*.2,.48,1);ctx.fillStyle=colorFor(p.i,p.depth);ctx.fillText(glyphFor(p.i,p.x,p.y),p.x,p.y);state.projected.push(p)}ctx.globalAlpha=1;
+ if(state.view.layers.structures)for(const s of w.structures){const x=Math.round(s.x),y=Math.round(s.y),i=idx(clamp(x,0,n-1),clamp(y,0,n-1),n),p=projectCell(s.x,s.y,w.height[i]+.035,rect);ctx.fillStyle=PALETTES[state.view.palette]?.structure||'#f4e5a0';ctx.font=`800 ${baseFont*1.35}px var(--mono)`;ctx.fillText(s.type==='tower'?'‡':'⌂',p.x,p.y-baseFont*.35)}
+ if(state.view.layers.agents)for(const a of w.agents){const x=clamp(Math.round(a.x),0,n-1),y=clamp(Math.round(a.y),0,n-1),p=projectCell(a.x,a.y,w.height[idx(x,y,n)]+.025,rect);ctx.fillStyle=PALETTES[state.view.palette]?.agent||'#fff4d8';ctx.font=`900 ${baseFont*.95}px var(--mono)`;ctx.fillText('@',p.x,p.y-baseFont*.15)}
+ drawWeather(rect,baseFont);drawSelection(rect,baseFont);state.lastAscii=buildAsciiFrame(96,44);const t=performance.now();if(state.lastRenderAt){const instant=1000/(t-state.lastRenderAt);state.fps=state.fps*.86+instant*.14}state.lastRenderAt=t;$('#fpsStat').textContent=`${Math.round(state.fps)} frames/second`;$('#elevationStat').textContent=`Elevation ${Math.round(minH*100)}–${Math.round(maxH*100)}%`;$('#worldStat').textContent=`${n} × ${n}`
+}
+function drawBlankGrid(rect){ctx.strokeStyle=state.ui.theme==='light'?'rgba(50,80,55,.12)':'rgba(120,170,130,.1)';ctx.lineWidth=1;const gap=28;for(let x=rect.width%gap;x<rect.width;x+=gap){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,rect.height);ctx.stroke()}for(let y=rect.height%gap;y<rect.height;y+=gap){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(rect.width,y);ctx.stroke()}}
+function drawWeather(rect,font){if(!state.view.layers.weather)return;const w=state.world;if(!['Rain','Snow','Fog','Wind'].includes(w.weather))return;const seed=Math.floor(w.day*11+performance.now()/180),rng=mulberry32(hashString(state.generation.seed)+seed);ctx.font=`600 ${Math.max(7,font*.72)}px var(--mono)`;ctx.globalAlpha=.55;if(w.weather==='Fog'){const grad=ctx.createLinearGradient(0,0,rect.width,rect.height);grad.addColorStop(0,'rgba(215,230,220,.02)');grad.addColorStop(.5,'rgba(215,230,220,.14)');grad.addColorStop(1,'rgba(215,230,220,.03)');ctx.fillStyle=grad;ctx.fillRect(0,0,rect.width,rect.height)}else{ctx.fillStyle=PALETTES[state.view.palette]?.weather||(w.weather==='Snow'?'#dff4ff':'#9ec9d8');const count=Math.floor(rect.width*rect.height/8500);for(let i=0;i<count;i++){const x=rng()*rect.width,y=rng()*rect.height;ctx.fillText(w.weather==='Snow'?'·':w.weather==='Wind'?'~':'│',x,y)}}ctx.globalAlpha=1}
+function drawSelection(rect,font){if(!state.selection)return;const{x,y}=state.selection,i=idx(x,y),p=projectCell(x,y,state.world.height[i]+.02,rect);ctx.strokeStyle='#d9ff72';ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,Math.max(6,font*.65),0,Math.PI*2);ctx.stroke();const call=$('#selectionCallout');call.style.left=`${p.x}px`;call.style.top=`${p.y}px`;call.classList.add('visible');call.innerHTML=`<b>${x}, ${y}</b><br>${escapeHtml(BIOMES[state.world.biome[i]].name)} · ${Math.round(state.world.height[i]*100)}% elevation`} 
+function buildAsciiFrame(cols=96,rows=44){const w=state.world;if(w.isBlank)return'';cols=Math.max(24,cols);rows=Math.max(14,rows);const chars=Array.from({length:rows},()=>Array(cols).fill(' ')),depths=Array.from({length:rows},()=>new Float32Array(cols).fill(-Infinity));const rect={width:cols-1,height:rows-1};const original={panX:state.view.panX,panY:state.view.panY};for(let y=0;y<w.n;y++)for(let x=0;x<w.n;x++){const i=idx(x,y,w.n),p=projectCell(x,y,w.height[i],rect),cx=Math.round(p.x),cy=Math.round(p.y);if(cx<0||cy<0||cx>=cols||cy>=rows||p.depth<depths[cy][cx])continue;depths[cy][cx]=p.depth;chars[cy][cx]=glyphFor(i,x,y)}
+ if(state.view.layers.structures)for(const s of w.structures){const x=Math.round(s.x),y=Math.round(s.y),p=projectCell(s.x,s.y,w.height[idx(clamp(x,0,w.n-1),clamp(y,0,w.n-1),w.n)],rect),cx=Math.round(p.x),cy=Math.round(p.y);if(cx>=0&&cy>=0&&cx<cols&&cy<rows)chars[cy][cx]=s.type==='tower'?'†':'⌂'}
+ if(state.view.layers.agents)for(const a of w.agents){const x=Math.round(a.x),y=Math.round(a.y),p=projectCell(a.x,a.y,w.height[idx(clamp(x,0,w.n-1),clamp(y,0,w.n-1),w.n)],rect),cx=Math.round(p.x),cy=Math.round(p.y);if(cx>=0&&cy>=0&&cx<cols&&cy<rows)chars[cy][cx]='@'}
+ return chars.map(r=>r.join('').replace(/\s+$/,'')).join('\n').replace(/^\n+|\n+$/g,'')}
+
+function nearestProjected(clientX,clientY,maxDist=34){const r=canvas.getBoundingClientRect(),px=clientX-r.left,py=clientY-r.top;let best=null,bestD=maxDist;for(const p of state.projected){const d=Math.hypot(p.x-px,p.y-py);if(d<bestD){best=p;bestD=d}}return best}
+function selectCell(x,y,clientX=null,clientY=null){state.selection={x:clamp(Math.round(x),0,state.world.n-1),y:clamp(Math.round(y),0,state.world.n-1)};updateSelectionUI();requestRender();if(clientX!=null){const r=$('#viewport').getBoundingClientRect(),call=$('#selectionCallout');call.style.left=`${clientX-r.left}px`;call.style.top=`${clientY-r.top}px`}scheduleSave()}
+function beginStroke(){if(state.strokeSnapshot)return;state.strokeSnapshot={label:`${state.tool.mode} stroke`,world:serializeWorld(),selection:state.selection?{...state.selection}:null};state.strokeChanged=false}
+function finishStroke(){if(state.strokeChanged&&state.strokeSnapshot){state.history.push(state.strokeSnapshot);if(state.history.length>32)state.history.shift();state.future=[];updateHistoryButtons();deriveBiomes(state.world,false);updateAllUI();scheduleSave()}state.strokeSnapshot=null;state.strokeChanged=false}
+function applyBrushAt(x,y){const w=state.world,n=w.n;if(w.isBlank)return;const radius=state.tool.mode==='paint'?state.tool.paintRadius:state.tool.radius,cx=Math.round(x),cy=Math.round(y);for(let oy=-radius;oy<=radius;oy++)for(let ox=-radius;ox<=radius;ox++){const qx=cx+ox,qy=cy+oy;if(qx<0||qy<0||qx>=n||qy>=n)continue;const dist=Math.hypot(ox,oy);if(dist>radius)continue;const fall=Math.pow(1-dist/(radius+.001),1.4),i=idx(qx,qy,n);if(state.tool.mode==='sculpt'){
+  const amt=state.tool.strength*.035*fall;if(state.tool.sculptAction==='raise')w.height[i]=clamp(w.height[i]+amt);else if(state.tool.sculptAction==='lower')w.height[i]=clamp(w.height[i]-amt);else{let sum=0,count=0;for(let sy=-1;sy<=1;sy++)for(let sx=-1;sx<=1;sx++){const nx=qx+sx,ny=qy+sy;if(nx>=0&&ny>=0&&nx<n&&ny<n){sum+=w.height[idx(nx,ny,n)];count++}}w.height[i]=lerp(w.height[i],sum/count,state.tool.strength*.18*fall)}
+ }else if(state.tool.mode==='paint'){
+  const target=state.tool.paintValue,amount=.22*fall;const key=state.tool.paintLayer;if(key==='fire')w.fire[i]=lerp(w.fire[i],target,amount);else if(key==='water')w.water[i]=lerp(w.water[i],target*.45,amount);else if(key in w)w[key][i]=lerp(w[key][i],target,amount)
+ }state.strokeChanged=true}
+ selectCell(cx,cy);requestRender()
+}
+function setMode(mode){state.tool.mode=mode;$$('.mode-btn').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));$('#viewport').dataset.mode=mode;$('#pointerModeStat').textContent=`${mode[0].toUpperCase()+mode.slice(1)} mode`;['orbit','inspect','sculpt','paint'].forEach(m=>{$(`#${m}Tool`).hidden=m!==mode});setStatus({orbit:'Drag to orbit; Shift-drag to pan; wheel to zoom.',inspect:'Choose a visible cell to inspect.',sculpt:'Drag across terrain to sculpt elevation.',paint:'Drag across terrain to paint world properties.'}[mode]);scheduleSave()}
+function updateCameraControls(){$('#yawRange').value=Math.round(state.view.yaw*180/Math.PI);$('#pitchRange').value=Math.round(state.view.pitch*180/Math.PI);$('#zoomRange').value=Math.round(state.view.zoom*100);$('#yawValue').textContent=`${Math.round(state.view.yaw*180/Math.PI)}°`;$('#pitchValue').textContent=`${Math.round(state.view.pitch*180/Math.PI)}°`;$('#zoomValue').textContent=`${state.view.zoom.toFixed(2)}×`;$('#projectionStat').textContent=state.view.projection==='perspective'?'Perspective':'Orthographic';$('#perspectiveBtn').classList.toggle('active',state.view.projection==='perspective');$('#orthoBtn').classList.toggle('active',state.view.projection==='orthographic')}
+function resetCamera(){state.view.yaw=-38*Math.PI/180;state.view.pitch=46*Math.PI/180;state.view.zoom=1;state.view.panX=0;state.view.panY=0;updateCameraControls();requestRender();scheduleSave();setStatus('Camera reset.')}
+function focusSelection(){if(!state.selection)return;const rect={width:canvas.clientWidth,height:canvas.clientHeight},i=idx(state.selection.x,state.selection.y),p=projectCell(state.selection.x,state.selection.y,state.world.height[i],rect);state.view.panX+=rect.width/2-p.x;state.view.panY+=rect.height/2-p.y;requestRender();scheduleSave();setStatus(`Centered camera on ${state.selection.x}, ${state.selection.y}.`)}
+
+canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);const p=nearestProjected(e.clientX,e.clientY);drag={id:e.pointerId,x:e.clientX,y:e.clientY,yaw:state.view.yaw,pitch:state.view.pitch,panX:state.view.panX,panY:state.view.panY,moved:false,shift:e.shiftKey,lastCell:null};$('#viewport').classList.add('dragging');if((state.tool.mode==='sculpt'||state.tool.mode==='paint')&&p){beginStroke();applyBrushAt(p.x,p.y);drag.lastCell=`${p.x},${p.y}`}else if(state.tool.mode==='inspect'&&p)selectCell(p.x,p.y,e.clientX,e.clientY)});
+canvas.addEventListener('pointermove',e=>{if(!drag||drag.id!==e.pointerId)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.hypot(dx,dy)>2)drag.moved=true;if(state.tool.mode==='orbit'){
+  if(drag.shift||e.shiftKey){state.view.panX=drag.panX+dx;state.view.panY=drag.panY+dy}else{state.view.yaw=drag.yaw+dx*.009;state.view.pitch=clamp(drag.pitch-dy*.007,10*Math.PI/180,82*Math.PI/180)}updateCameraControls();requestRender()
+ }else if(state.tool.mode==='inspect'){const p=nearestProjected(e.clientX,e.clientY);if(p)selectCell(p.x,p.y,e.clientX,e.clientY)}else{const p=nearestProjected(e.clientX,e.clientY,42);if(p&&`${p.x},${p.y}`!==drag.lastCell){applyBrushAt(p.x,p.y);drag.lastCell=`${p.x},${p.y}`}}
+});
+function endPointer(e){if(!drag||drag.id!==e.pointerId)return;finishStroke();drag=null;$('#viewport').classList.remove('dragging');scheduleSave()}
+canvas.addEventListener('pointerup',endPointer);canvas.addEventListener('pointercancel',endPointer);
+canvas.addEventListener('wheel',e=>{e.preventDefault();state.view.zoom=clamp(state.view.zoom*Math.exp(-e.deltaY*.0012),.35,2.6);updateCameraControls();requestRender();scheduleSave()},{passive:false});
+canvas.addEventListener('dblclick',e=>{const p=nearestProjected(e.clientX,e.clientY);if(p){selectCell(p.x,p.y,e.clientX,e.clientY);focusSelection()}});
+
+function updateSelectionUI(){const empty=$('#selectionEmpty'),details=$('#selectionDetails'),call=$('#selectionCallout');if(!state.selection||state.world.isBlank){empty.hidden=false;details.hidden=true;call.classList.remove('visible');$('#cellStatus').textContent='No cell selected';return}const{x,y}=state.selection,i=idx(x,y),w=state.world;empty.hidden=true;details.hidden=false;$('#selCoord').textContent=`${x}, ${y}`;$('#selBiome').textContent=BIOMES[w.biome[i]]?.name||'Unknown';$('#selElevation').textContent=`${Math.round(w.height[i]*100)}%`;$('#selWater').textContent=`${Math.round(w.water[i]*100)}%`;$('#selMoisture').textContent=`${Math.round(w.moisture[i]*100)}%`;$('#selVegetation').textContent=`${Math.round(w.vegetation[i]*100)}%`;$('#cellStatus').textContent=`${x}, ${y} · ${BIOMES[w.biome[i]]?.name||'Unknown'} · elevation ${Math.round(w.height[i]*100)}%`}
+function updateMetrics(){const w=state.world,day=Math.floor(w.day),seasonIndex=Math.floor(day/90)%4;$('#dayMetric').textContent=day.toLocaleString();$('#seasonMetric').textContent=SEASONS[seasonIndex];$('#weatherMetric').textContent=w.weather;$('#agentMetric').textContent=w.agents.length.toLocaleString();$('#seasonProgress').style.width=`${mod(day,90)/90*100}%`;$('#playBtn').innerHTML=state.sim.playing?'❚❚ Pause':'▶ Play';$('#playBtn').classList.toggle('primary',!state.sim.playing)}
+function updateEmptyState(){$('#emptyState').hidden=!state.world.isBlank;$('#sampleFlag').hidden=!state.project.isSample||state.world.isBlank}
+function updateLayers(){for(const key of Object.keys(state.view.layers)){const el=$(`#layer${key[0].toUpperCase()+key.slice(1)}`);if(el)el.checked=state.view.layers[key]}}
+function updateAllUI(){updateMetrics();updateSelectionUI();updateEmptyState();updateCameraControls();updateLayers();renderLog();updateHistoryButtons();$('#projectName').value=state.project.name;$('#worldStat').textContent=`${state.world.n} × ${state.world.n}`;$('#sampleFlag').hidden=!state.project.isSample||state.world.isBlank}
+function syncControlsFromState(){const g=state.generation,v=state.view,t=state.tool;$('#projectName').value=state.project.name;$('#seedInput').value=g.seed;$('#resolutionSelect').value=String(g.resolution);$('#presetSelect').value=g.preset;$('#climateSelect').value=g.climate;$('#settlementSelect').value=String(g.settlements);$('#seaLevel').value=Math.round(g.seaLevel*100);$('#roughness').value=Math.round(g.roughness*100);$('#seaValue').textContent=`${Math.round(g.seaLevel*100)}%`;$('#roughValue').textContent=`${Math.round(g.roughness*100)}%`;$('#speedRange').value=state.sim.speed;$('#speedValue').textContent=`${state.sim.speed}×`;$('#glyphSet').value=v.glyphSet;$('#paletteSelect').value=v.palette;$('#detailRange').value=Math.round(v.detail*100);$('#detailValue').textContent=`${Math.round(v.detail*100)}%`;$('#colorToggle').checked=v.color;$('#shadowToggle').checked=v.shadow;$('#sculptAction').value=t.sculptAction;$('#brushRadius').value=t.radius;$('#radiusValue').textContent=t.radius;$('#brushStrength').value=Math.round(t.strength*100);$('#strengthValue').textContent=`${Math.round(t.strength*100)}%`;$('#paintLayer').value=t.paintLayer;$('#paintValue').value=Math.round(t.paintValue*100);$('#paintValueLabel').textContent=`${Math.round(t.paintValue*100)}%`;$('#paintRadius').value=t.paintRadius;$('#paintRadiusValue').textContent=t.paintRadius;setMode(t.mode);updateCameraControls();updateLayers()}
+
+function freshStart(confirmFirst=true){if(confirmFirst&&!confirm('Start a blank project? The current project remains recoverable only if it has been saved or exported.'))return;pushHistory('fresh start');state.project={id:uid(),name:'Untitled World',createdAt:nowISO(),updatedAt:nowISO(),schemaVersion:SCHEMA_VERSION,isSample:false};state.world=blankWorld(state.generation.resolution);state.selection=null;state.eventLog=[];state.sim.playing=false;syncControlsFromState();updateAllUI();requestRender();scheduleSave();setStatus('Blank project ready.');toast('Fresh start','Sample data was removed. Generate a world when ready.')}
+function newProject(){if(!confirm('Create a new project? Export the current project first if you need a portable backup.'))return;state.generation={seed:`world-${Math.floor(Math.random()*999999)}`,preset:'highlands',resolution:64,seaLevel:.34,roughness:.58,climate:'temperate',settlements:4};state.view={...state.view,yaw:-38*Math.PI/180,pitch:46*Math.PI/180,zoom:1,panX:0,panY:0,projection:'perspective'};freshStart(false)}
+function randomizeSeed(){$('#seedInput').value=`${['copper','moss','anvil','river','signal','lantern','forge','cedar'][Math.floor(Math.random()*8)]}-${Math.floor(1000+Math.random()*9000)}`;state.generation.seed=$('#seedInput').value;setStatus('Random seed selected. Generate to apply it.');scheduleSave()}
+
+function currentAscii(){if(!state.lastAscii&&!state.world.isBlank)state.lastAscii=buildAsciiFrame(96,44);return state.lastAscii||''}
+function exportProject(){try{const record=makeRecord();downloadBlob(new Blob([JSON.stringify(record,null,2)],{type:'application/json'}),`${safeName(state.project.name)}.glyphscape.json`);setStatus('Project exported as JavaScript Object Notation (JSON).');toast('Project exported','The complete editable world was downloaded locally.')}catch(error){toast('Project export failed',error.message,'error',6000)}}
+async function importProjectFile(file){try{if(!file)throw new Error('No project file was selected.');const text=await file.text();const record=migrateRecord(JSON.parse(text));pushHistory('project import');applyRecord(record,{preserveHistory:true});state.project.id=uid();state.project.createdAt=nowISO();state.project.updatedAt=nowISO();state.project.isSample=false;await saveActive();logEvent(`Imported project from ${file.name}.`);toast('Project imported',file.name)}catch(error){toast('Import failed',`${error.message} Choose a GLYPHSCAPE project file exported by this application.`,'error',7000)}finally{$('#importFile').value=''}}
+function exportText(){const text=currentAscii();if(!text){toast('Nothing to export','Generate a world before exporting a text frame.','warn');return}const header=`GLYPHSCAPE v${VERSION}\n${state.project.name}\nSeed: ${state.generation.seed} · Day: ${Math.floor(state.world.day)} · Weather: ${state.world.weather}\n\n`;downloadBlob(new Blob([header+text+'\n'],{type:'text/plain;charset=utf-8'}),`${safeName(state.project.name)}-day-${Math.floor(state.world.day)}.txt`);setStatus('Current glyph frame exported as plain text.')}
+function exportSvg(){const text=currentAscii();if(!text){toast('Nothing to export','Generate a world before exporting a Scalable Vector Graphics (SVG) frame.','warn');return}const lines=text.split('\n'),max=Math.max(...lines.map(l=>l.length),1),font=12,line=14,width=max*7.25+28,height=lines.length*line+54;const body=lines.map((l,i)=>`<text x="14" y="${42+i*line}" xml:space="preserve">${escapeHtml(l)}</text>`).join('');const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="100%" height="100%" fill="#060807"/><text x="14" y="20" fill="#a9e66e" font-family="monospace" font-size="11" font-weight="700">${escapeHtml(state.project.name)} · GLYPHSCAPE v${VERSION} · Day ${Math.floor(state.world.day)}</text><g fill="#dce8dd" font-family="monospace" font-size="${font}">${body}</g></svg>`;downloadBlob(new Blob([svg],{type:'image/svg+xml;charset=utf-8'}),`${safeName(state.project.name)}-day-${Math.floor(state.world.day)}.svg`);setStatus('Current glyph frame exported as Scalable Vector Graphics (SVG).')}
+function exportPng(){if(state.world.isBlank){toast('Nothing to capture','Generate a world before capturing an image.','warn');return}canvas.toBlob(blob=>{if(!blob){toast('Image capture failed','The browser did not return image data.','error');return}downloadBlob(blob,`${safeName(state.project.name)}-day-${Math.floor(state.world.day)}.png`);setStatus('Viewport captured as Portable Network Graphics (PNG).')},'image/png')}
+function exportStandalone(){const text=currentAscii();if(!text){toast('Nothing to export','Generate a world before creating a standalone artifact.','warn');return}const meta={project:state.project.name,seed:state.generation.seed,day:Math.floor(state.world.day),weather:state.world.weather,generated:nowISO(),source:`GLYPHSCAPE v${VERSION}`};const html=`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(state.project.name)} — GLYPHSCAPE Capture</title><style>body{margin:0;min-height:100vh;background:#060807;color:#dce8dd;font-family:system-ui;padding:24px;box-sizing:border-box}main{max-width:max-content;margin:auto}h1{font-size:18px;letter-spacing:.08em;color:#a9e66e;margin:0 0 6px}.meta{color:#9aaa9c;font-size:12px;margin-bottom:18px}pre{margin:0;padding:16px;border:1px solid #344037;border-radius:12px;background:#0b0f0c;overflow:auto;font:12px/1 monospace;box-shadow:0 18px 50px rgba(0,0,0,.35)}footer{font-size:11px;color:#78857b;margin-top:12px}</style></head><body><main><h1>${escapeHtml(state.project.name)}</h1><div class="meta">Seed ${escapeHtml(state.generation.seed)} · Day ${Math.floor(state.world.day)} · ${escapeHtml(state.world.weather)}</div><pre>${escapeHtml(text)}</pre><footer>Captured locally with GLYPHSCAPE v${VERSION}. This standalone artifact contains no tracking or network dependencies.</footer><script type="application/json" id="glyphscape-capture-metadata">${escapeHtml(JSON.stringify(meta))}<\/script></main></body></html>`;downloadBlob(new Blob([html],{type:'text/html;charset=utf-8'}),`${safeName(state.project.name)}-capture.html`);setStatus('Standalone HyperText Markup Language (HTML) capture exported.')}
+function showTextPreview(){const text=currentAscii();if(!text){toast('No text frame yet','Generate a world first.','warn');return}$('#asciiPreview').textContent=text;$('#textDialog').showModal()}
+async function copyText(){try{await navigator.clipboard.writeText(currentAscii());toast('Copied','The current ASCII frame is on the clipboard.')}catch{const r=document.createRange();r.selectNodeContents($('#asciiPreview'));const s=getSelection();s.removeAllRanges();s.addRange(r);document.execCommand('copy');s.removeAllRanges();toast('Copied','The current ASCII frame is on the clipboard.')}}
+
+async function saveNamedProject(){try{const record=makeRecord();const ok=await dbPut(record);localStorage.setItem(ACTIVE_KEY,JSON.stringify(record));setAutosave('saved');toast('Project saved',ok?'Stored in the local project library.':'Stored as the active local project.');await renderProjectList()}catch(error){toast('Save failed',error.message,'error')}}
+async function renderProjectList(){const list=$('#projectList');list.innerHTML='<div class="hint">Reading local projects…</div>';let records=await dbList();if(!records.some(r=>r.project?.id===state.project.id))records.unshift(makeRecord());const seen=new Set();records=records.filter(r=>{const id=r.project?.id;if(!id||seen.has(id))return false;seen.add(id);return true});if(!records.length){list.innerHTML='<div class="hint">No local projects have been saved.</div>';return}list.innerHTML='';for(const r of records){const row=document.createElement('article');row.className='project-row';row.innerHTML=`<div><h3>${escapeHtml(r.project.name||'Untitled World')}${r.project.id===state.project.id?' · CURRENT':''}</h3><p>${escapeHtml(r.generation?.preset||'world')} · ${r.world?.n||'?'} × ${r.world?.n||'?'} · updated ${escapeHtml(formatDate(r.project.updatedAt))}</p></div><div class="project-actions"><button class="small" data-load-project="${escapeHtml(r.project.id)}">Open</button><button class="small danger" data-delete-project="${escapeHtml(r.project.id)}">Delete</button></div>`;list.appendChild(row)}
+ $$('[data-load-project]',list).forEach(b=>b.addEventListener('click',async()=>{const id=b.dataset.loadProject;let r=await dbGet(id);if(!r&&id===state.project.id)r=makeRecord();if(!r){toast('Project unavailable','The local record could not be read.','error');return}applyRecord(r);$('#projectsDialog').close();await saveActive();toast('Project opened',r.project.name)}));
+ $$('[data-delete-project]',list).forEach(b=>b.addEventListener('click',async()=>{const id=b.dataset.deleteProject,name=b.closest('.project-row').querySelector('h3').textContent.replace(' · CURRENT','');if(!confirm(`Delete the local project “${name}”? Export it first if you need a backup.`))return;await dbDelete(id);if(id===state.project.id){localStorage.removeItem(ACTIVE_KEY);newProject()}await renderProjectList();toast('Project deleted',name)}))
+}
+async function openProjects(){await renderProjectList();$('#projectsDialog').showModal()}
+
+function togglePanel(side,force){const key=side==='left'?'leftOpen':'rightOpen';state.ui[key]=typeof force==='boolean'?force:!state.ui[key];applyPanelState();scheduleSave()}
+function applyPanelState(){const shell=$('#shell');shell.classList.toggle('left-collapsed',!state.ui.leftOpen);shell.classList.toggle('right-collapsed',!state.ui.rightOpen);$('#toggleLeft').textContent=state.ui.leftOpen?'◀':'▶';$('#toggleRight').textContent=state.ui.rightOpen?'▶':'◀';setTimeout(requestRender,210)}
+function setTheme(theme){state.ui.theme=theme;document.documentElement.dataset.theme=theme;$('#themeBtn').textContent=theme==='dark'?'☀':'☾';requestRender();scheduleSave()}
+
+function bindRange(id,handler,event='input'){$(id).addEventListener(event,e=>handler(e.target.value,e))}
+function bindControls(){
+ $('#newBtn').addEventListener('click',newProject);$('#projectsBtn').addEventListener('click',openProjects);$('#undoBtn').addEventListener('click',undo);$('#redoBtn').addEventListener('click',redo);$('#themeBtn').addEventListener('click',()=>setTheme(state.ui.theme==='dark'?'light':'dark'));$('#helpBtn').addEventListener('click',()=>$('#helpDialog').showModal());
+ $('#toggleLeft').addEventListener('click',()=>togglePanel('left'));$('#closeLeft').addEventListener('click',()=>togglePanel('left',false));$('#toggleRight').addEventListener('click',()=>togglePanel('right'));$('#toggleRightTop').addEventListener('click',()=>togglePanel('right'));$('#closeRight').addEventListener('click',()=>togglePanel('right',false));
+ $('#projectName').addEventListener('input',e=>{state.project.name=e.target.value||'Untitled World';scheduleSave()});$('#seedInput').addEventListener('input',e=>{state.generation.seed=e.target.value;scheduleSave()});$('#resolutionSelect').addEventListener('change',e=>{state.generation.resolution=Number(e.target.value);scheduleSave()});$('#presetSelect').addEventListener('change',e=>{state.generation.preset=e.target.value;scheduleSave()});$('#climateSelect').addEventListener('change',e=>{state.generation.climate=e.target.value;scheduleSave()});$('#settlementSelect').addEventListener('change',e=>{state.generation.settlements=Number(e.target.value);scheduleSave()});
+ bindRange('#seaLevel',v=>{state.generation.seaLevel=Number(v)/100;$('#seaValue').textContent=`${v}%`;scheduleSave()});bindRange('#roughness',v=>{state.generation.roughness=Number(v)/100;$('#roughValue').textContent=`${v}%`;scheduleSave()});$('#generateBtn').addEventListener('click',()=>generateWorld());$('#emptyGenerateBtn').addEventListener('click',()=>generateWorld());$('#randomSeedBtn').addEventListener('click',randomizeSeed);$('#freshStartBtn').addEventListener('click',()=>freshStart());$('#sampleFlag').addEventListener('click',()=>freshStart());
+ $('#playBtn').addEventListener('click',()=>{if(state.world.isBlank){toast('Generate a world first','Simulation needs an active world.','warn');return}state.sim.playing=!state.sim.playing;state.sim.last=performance.now();updateMetrics();setStatus(state.sim.playing?'Simulation running.':'Simulation paused.');scheduleSave()});$('#stepBtn').addEventListener('click',()=>{simulationStep(1);setStatus('Advanced one simulation day.')});bindRange('#speedRange',v=>{state.sim.speed=Number(v);$('#speedValue').textContent=`${v}×`;scheduleSave()});$('#applyEventBtn').addEventListener('click',()=>applyEvent($('#eventSelect').value));$('#clearLogBtn').addEventListener('click',()=>{state.eventLog=[];renderLog();scheduleSave()});
+ $$('.mode-btn').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));$('#perspectiveBtn').addEventListener('click',()=>{state.view.projection='perspective';updateCameraControls();requestRender();scheduleSave()});$('#orthoBtn').addEventListener('click',()=>{state.view.projection='orthographic';updateCameraControls();requestRender();scheduleSave()});$('#resetCameraBtn').addEventListener('click',resetCamera);$('#focusSelectionBtn').addEventListener('click',focusSelection);
+ $('#textPreviewBtn').addEventListener('click',showTextPreview);$('#capturePngBtn').addEventListener('click',exportPng);$('#exportJsonBtn').addEventListener('click',exportProject);$('#importJsonBtn').addEventListener('click',()=>$('#importFile').click());$('#importFile').addEventListener('change',e=>importProjectFile(e.target.files[0]));$('#exportTextBtn').addEventListener('click',exportText);$('#exportSvgBtn').addEventListener('click',exportSvg);$('#exportPngBtn').addEventListener('click',exportPng);$('#exportHtmlBtn').addEventListener('click',exportStandalone);$('#copyTextBtn').addEventListener('click',copyText);$('#downloadTextDialogBtn').addEventListener('click',exportText);
+ $('#glyphSet').addEventListener('change',e=>{state.view.glyphSet=e.target.value;requestRender();scheduleSave()});$('#paletteSelect').addEventListener('change',e=>{state.view.palette=e.target.value;requestRender();scheduleSave()});bindRange('#detailRange',v=>{state.view.detail=Number(v)/100;$('#detailValue').textContent=`${v}%`;requestRender();scheduleSave()});$('#colorToggle').addEventListener('change',e=>{state.view.color=e.target.checked;requestRender();scheduleSave()});$('#shadowToggle').addEventListener('change',e=>{state.view.shadow=e.target.checked;requestRender();scheduleSave()});
+ $('#sculptAction').addEventListener('change',e=>{state.tool.sculptAction=e.target.value;scheduleSave()});bindRange('#brushRadius',v=>{state.tool.radius=Number(v);$('#radiusValue').textContent=v;scheduleSave()});bindRange('#brushStrength',v=>{state.tool.strength=Number(v)/100;$('#strengthValue').textContent=`${v}%`;scheduleSave()});$('#paintLayer').addEventListener('change',e=>{state.tool.paintLayer=e.target.value;scheduleSave()});bindRange('#paintValue',v=>{state.tool.paintValue=Number(v)/100;$('#paintValueLabel').textContent=`${v}%`;scheduleSave()});bindRange('#paintRadius',v=>{state.tool.paintRadius=Number(v);$('#paintRadiusValue').textContent=v;scheduleSave()});
+ bindRange('#yawRange',v=>{state.view.yaw=Number(v)*Math.PI/180;updateCameraControls();requestRender();scheduleSave()});bindRange('#pitchRange',v=>{state.view.pitch=Number(v)*Math.PI/180;updateCameraControls();requestRender();scheduleSave()});bindRange('#zoomRange',v=>{state.view.zoom=Number(v)/100;updateCameraControls();requestRender();scheduleSave()});
+ Object.keys(state.view.layers).forEach(key=>{const el=$(`#layer${key[0].toUpperCase()+key.slice(1)}`);if(el)el.addEventListener('change',e=>{state.view.layers[key]=e.target.checked;requestRender();scheduleSave()})});
+ $$('[data-close-dialog]').forEach(b=>b.addEventListener('click',()=>document.getElementById(b.dataset.closeDialog).close()));$$('dialog').forEach(d=>d.addEventListener('click',e=>{if(e.target===d){const r=d.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)d.close()}}));$('#saveProjectBtn').addEventListener('click',saveNamedProject);
+ window.addEventListener('resize',()=>{if(innerWidth<=860){state.ui.leftOpen=false;state.ui.rightOpen=false;applyPanelState()}requestRender()});window.addEventListener('beforeunload',()=>{try{localStorage.setItem(ACTIVE_KEY,JSON.stringify(makeRecord()))}catch{}});
+ document.addEventListener('keydown',e=>{const tag=document.activeElement?.tagName;if(['INPUT','SELECT','TEXTAREA'].includes(tag))return;const meta=e.ctrlKey||e.metaKey;if(meta&&e.key.toLowerCase()==='z'){e.preventDefault();e.shiftKey?redo():undo();return}if(meta&&e.key.toLowerCase()==='y'){e.preventDefault();redo();return}if(e.key===' '){e.preventDefault();$('#playBtn').click();return}const key=e.key.toLowerCase();if({o:'orbit',i:'inspect',s:'sculpt',p:'paint'}[key])setMode({o:'orbit',i:'inspect',s:'sculpt',p:'paint'}[key]);if(e.key==='ArrowLeft'){state.view.yaw-=.06;updateCameraControls();requestRender()}if(e.key==='ArrowRight'){state.view.yaw+=.06;updateCameraControls();requestRender()}if(e.key==='ArrowUp'){state.view.pitch=clamp(state.view.pitch+.04,.17,1.43);updateCameraControls();requestRender()}if(e.key==='ArrowDown'){state.view.pitch=clamp(state.view.pitch-.04,.17,1.43);updateCameraControls();requestRender()}})
+}
+
+function buildLegend(){$('#biomeLegend').innerHTML=BIOMES.map(b=>`<div class="legend-item"><span class="swatch" style="background:${b.color}"></span>${escapeHtml(b.name)}</div>`).join('')}
+function animationLoop(t){resizeCanvas();if(state.sim.playing&&!state.world.isBlank){if(!state.sim.last)state.sim.last=t;state.sim.accumulator+=(t-state.sim.last)*state.sim.speed;state.sim.last=t;let guard=0;while(state.sim.accumulator>=state.sim.stepMs&&guard<6){simulationStep(1);state.sim.accumulator-=state.sim.stepMs;guard++}requestRender()}else state.sim.last=t;if(state.view.layers.weather&&['Rain','Snow','Wind'].includes(state.world.weather)&&t-state.lastRenderAt>120)requestRender();requestAnimationFrame(animationLoop)}
+async function init(){
+ bindControls();buildLegend();renderLog();let settings={};try{settings=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}')}catch{}state.ui.theme=settings.theme||((matchMedia&&matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');state.ui.leftOpen=settings.leftOpen!==false;state.ui.rightOpen=settings.rightOpen!==false;if(innerWidth<=860){state.ui.leftOpen=false;state.ui.rightOpen=false}document.documentElement.dataset.theme=state.ui.theme;applyPanelState();state.db=await openDB();
+ const restored=restoreActive();if(!restored){state.project.name='Highland Reach — Sample';state.project.isSample=true;state.generation.seed='green-shoe';state.generation.preset='highlands';generateWorld({sample:true});state.history=[];state.future=[];logEvent('Loaded removable sample world.');setStatus('Sample world ready. Clear it for a blank project.')}else{setStatus(`Recovered ${state.project.name} from local storage.`);setAutosave('saved')}
+ syncControlsFromState();updateAllUI();requestRender();requestAnimationFrame(animationLoop);setTimeout(()=>canvas.focus({preventScroll:true}),250)
+}
+init().catch(error=>{console.error(error);setAutosave('error');toast('Application initialization failed',`${error.message} Reload the file; your last autosave may still be recoverable.`,'error',9000);setStatus(`Initialization error: ${error.message}`)});
+})();
+</script>
+</body>
+</html>

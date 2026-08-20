@@ -1,0 +1,1168 @@
+<!doctype html>
+<html data-theme="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
+<meta content="dark light" name="color-scheme"/>
+<title>GLYPHSCAPE v1.2.1 — ASCII Vision and Navigation</title>
+<meta content="A local-first procedural 3D world simulator and ASCII capture instrument." name="description"/><style>
+:root{
+  --bg:#0b0d0c;--surface:#121613;--surface2:#181d19;--surface3:#202720;--line:#344037;
+  --text:#f0f4ef;--muted:#aeb9b0;--faint:#7c8980;--accent:#a9e66e;--accent2:#6fd0bd;
+  --warn:#f4c95d;--danger:#ff7a72;--ok:#79d88b;--shadow:0 18px 50px rgba(0,0,0,.34);
+  --radius:12px;--header:70px;--left:304px;--right:306px;--font:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+html[data-theme="light"]{
+  --bg:#ecefe9;--surface:#fbfcf9;--surface2:#f3f6f0;--surface3:#e5ebe3;--line:#bdc8bc;
+  --text:#172019;--muted:#526057;--faint:#69766e;--accent:#397b18;--accent2:#147a6c;
+  --warn:#825f00;--danger:#b42c26;--ok:#207d37;--shadow:0 18px 50px rgba(30,45,32,.16)
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--font)}
+button,input,select,textarea{font:inherit;color:inherit}
+button,input,select,textarea{border:1px solid var(--line);background:var(--surface2);border-radius:8px}
+button{min-height:36px;padding:7px 10px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;font-weight:680;letter-spacing:.005em}
+button:hover{border-color:var(--accent);background:var(--surface3)}
+button:active{transform:translateY(1px)}
+button:disabled{opacity:.44;cursor:not-allowed;transform:none}
+button.primary{background:var(--accent);color:#14200f;border-color:transparent}
+html[data-theme="light"] button.primary{color:#fff}
+button.danger{color:var(--danger)}
+button.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+button.icon{width:38px;padding:0;font-size:18px}
+button.small{min-height:30px;padding:4px 8px;font-size:12px}
+button.segment.active,.mode-btn.active{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--surface2))}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 72%,white);outline-offset:2px}
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+#app{height:100%;display:grid;grid-template-rows:var(--header) minmax(0,1fr)}
+.app-header{display:flex;align-items:center;gap:14px;padding:10px 14px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,var(--surface2),var(--surface));z-index:20}
+.identity{min-width:245px;display:flex;align-items:center;gap:11px}
+.mark{width:42px;height:42px;border:1px solid var(--line);border-radius:11px;display:grid;place-items:center;background:var(--bg);font:900 23px/1 var(--mono);color:var(--accent);box-shadow:inset 0 0 0 1px rgba(255,255,255,.03)}
+.identity h1{font-size:18px;line-height:1.05;letter-spacing:.12em;margin:0}.identity p{font-size:11px;margin:4px 0 0;color:var(--muted);max-width:380px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.workflow{display:flex;align-items:center;gap:5px;color:var(--faint);font:650 10px/1 var(--mono);letter-spacing:.07em;margin-right:auto;white-space:nowrap}.workflow b{color:var(--muted)}
+.header-actions{display:flex;align-items:center;gap:6px}.header-actions .label-hide{display:inline}
+.version-chip,.status-chip{height:30px;border:1px solid var(--line);border-radius:999px;padding:0 9px;display:inline-flex;align-items:center;gap:7px;background:var(--surface2);font:700 11px/1 var(--mono);white-space:nowrap}
+.autosave-dot{width:8px;height:8px;border-radius:50%;background:var(--faint);box-shadow:0 0 0 3px color-mix(in srgb,var(--faint) 18%,transparent)}
+.autosave-dot.unsaved{background:var(--danger)}.autosave-dot.saving{background:var(--warn);animation:pulse 1s infinite}.autosave-dot.saved{background:var(--ok)}.autosave-dot.session{background:var(--warn)}.autosave-dot.recovery{background:var(--warn);animation:pulse 1.4s infinite}.autosave-dot.error{background:var(--danger)}
+@keyframes pulse{50%{opacity:.42}}
+.shell{min-height:0;display:grid;grid-template-columns:var(--left) minmax(0,1fr) var(--right);transition:grid-template-columns .18s ease}
+.shell.left-collapsed{grid-template-columns:0 minmax(0,1fr) var(--right)}.shell.right-collapsed{grid-template-columns:var(--left) minmax(0,1fr) 0}.shell.left-collapsed.right-collapsed{grid-template-columns:0 minmax(0,1fr) 0}
+.panel{min-width:0;overflow:hidden;background:var(--surface);position:relative;z-index:10}.panel.left{border-right:1px solid var(--line)}.panel.right{border-left:1px solid var(--line)}
+.panel-inner{width:var(--left);height:100%;overflow:auto;padding:10px 10px 28px}.right .panel-inner{width:var(--right)}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 2px 10px}.panel-head h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;margin:0;color:var(--muted)}
+.section{border:1px solid var(--line);border-radius:var(--radius);margin-bottom:9px;background:var(--surface2);overflow:hidden}.section summary{list-style:none;cursor:pointer;padding:10px 11px;font-size:12px;font-weight:800;letter-spacing:.045em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;justify-content:space-between}.section summary::-webkit-details-marker{display:none}.section summary::after{content:'▾';font-size:12px}.section:not([open]) summary::after{content:'▸'}.section-body{padding:0 10px 11px;border-top:1px solid var(--line)}
+.field{display:grid;gap:5px;margin-top:9px}.field>label,.field-label{font-size:11px;font-weight:700;color:var(--muted)}.field input,.field select{width:100%;min-height:34px;padding:6px 8px}.field input[type="range"]{padding:0;border:0;background:transparent;accent-color:var(--accent)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.field-inline{display:flex;align-items:center;gap:7px}.field-inline input[type=checkbox]{width:17px;height:17px;accent-color:var(--accent)}
+.value{font:700 11px/1 var(--mono);color:var(--accent);min-width:42px;text-align:right}.hint{font-size:11px;line-height:1.4;color:var(--faint);margin:7px 0 0}.button-row{display:flex;gap:6px;margin-top:10px}.button-row>*{flex:1;min-width:0}.button-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:9px}.button-grid button{min-width:0;white-space:normal;line-height:1.25;overflow-wrap:anywhere}
+.workspace{min-width:0;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;background:var(--bg);position:relative}
+.toolstrip{display:flex;align-items:center;gap:7px;padding:7px 9px;border-bottom:1px solid var(--line);background:var(--surface);min-width:0;overflow-x:auto}.toolstrip::-webkit-scrollbar{height:5px}.toolstrip .group{display:flex;align-items:center;gap:4px;padding-right:7px;border-right:1px solid var(--line);white-space:nowrap}.toolstrip .group:last-child{border:0}.toolstrip .spacer{margin-left:auto}.toolstrip .mode-label{font:700 10px/1 var(--mono);color:var(--faint);padding:0 3px}
+.viewport{min-height:0;position:relative;overflow:hidden;isolation:isolate;background:#060807}.viewport canvas{width:100%;height:100%;display:block;touch-action:none;cursor:grab}.viewport[data-mode="inspect"] canvas{cursor:crosshair}.viewport[data-mode="sculpt"] canvas,.viewport[data-mode="paint"] canvas{cursor:cell}.viewport.dragging canvas{cursor:grabbing}
+.canvas-overlay{position:absolute;pointer-events:none;inset:0}.stats{position:absolute;left:10px;top:10px;display:flex;flex-wrap:wrap;gap:5px;max-width:70%}.stat{border:1px solid rgba(180,210,185,.22);background:rgba(8,12,9,.76);backdrop-filter:blur(8px);border-radius:7px;padding:5px 7px;color:#dbe6dc;font:650 10px/1 var(--mono)}
+.sample-flag{position:absolute;right:10px;top:10px;border:1px solid var(--warn);color:var(--warn);background:rgba(30,24,5,.78);border-radius:7px;padding:6px 8px;font:750 10px/1 var(--mono);pointer-events:auto}.sample-flag[hidden]{display:none}
+.selection-callout{position:absolute;display:none;pointer-events:none;transform:translate(10px,-100%);min-width:150px;max-width:250px;border:1px solid var(--accent);border-radius:8px;padding:8px;background:rgba(10,14,11,.93);color:#eef5ee;box-shadow:var(--shadow);font-size:11px}.selection-callout.visible{display:block}.selection-callout b{color:var(--accent)}
+.empty-state{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:30px;background:radial-gradient(circle at 50% 45%,rgba(100,150,110,.1),transparent 45%);pointer-events:none}.empty-state[hidden]{display:none}.empty-card{max-width:470px;border:1px solid var(--line);border-radius:16px;background:color-mix(in srgb,var(--surface) 92%,transparent);padding:26px;box-shadow:var(--shadow)}.empty-card h2{margin:0 0 8px;font-size:22px}.empty-card p{color:var(--muted);line-height:1.55;margin:0}.empty-card .button-row{margin-top:16px}.empty-card button{pointer-events:auto}
+.bottom-strip{display:flex;align-items:center;gap:8px;min-height:38px;padding:5px 9px;border-top:1px solid var(--line);background:var(--surface);font-size:11px;color:var(--muted);overflow:hidden}.bottom-strip .message{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bottom-strip .grow{flex:1}.progress{width:92px;height:6px;border-radius:999px;background:var(--surface3);overflow:hidden}.progress>i{display:block;height:100%;width:0;background:var(--accent);transition:width .15s}
+.edge-toggle{position:absolute;z-index:30;top:50%;width:24px;height:54px;min-height:0;padding:0;background:var(--surface2);border-color:var(--line);transform:translateY(-50%);font-size:13px}.edge-toggle.left{left:0;border-left:0;border-radius:0 8px 8px 0}.edge-toggle.right{right:0;border-right:0;border-radius:8px 0 0 8px}
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:9px}.metric{border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--surface)}.metric span{display:block;font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.05em}.metric b{display:block;margin-top:4px;font:750 13px/1 var(--mono);color:var(--text)}
+.legend{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:8px}.legend-item{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted)}.swatch{width:12px;height:12px;border-radius:3px;border:1px solid rgba(255,255,255,.25)}
+.log{max-height:160px;overflow:auto;border:1px solid var(--line);background:var(--surface);border-radius:8px;margin-top:8px;font:11px/1.45 var(--mono)}.log-entry{padding:6px 8px;border-bottom:1px solid var(--line)}.log-entry:last-child{border:0}.log-entry time{color:var(--faint);margin-right:6px}.log-entry.warn{color:var(--warn)}
+dialog{width:min(760px,calc(100vw - 28px));max-height:min(820px,calc(100vh - 28px));padding:0;border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--text);box-shadow:var(--shadow)}dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(4px)}.dialog-head{display:flex;align-items:center;justify-content:space-between;padding:13px 14px;border-bottom:1px solid var(--line)}.dialog-head h2{margin:0;font-size:16px}.dialog-body{padding:14px;overflow:auto;max-height:calc(100vh - 150px)}.dialog-foot{display:flex;justify-content:flex-end;gap:7px;padding:10px 14px;border-top:1px solid var(--line)}
+.project-list{display:grid;gap:7px}.project-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface2)}.project-row.damaged{border-color:color-mix(in srgb,var(--danger) 62%,var(--line))}.project-row h3{margin:0 0 3px;font-size:13px}.project-row p{margin:0;font-size:10px;color:var(--faint);line-height:1.4}.project-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:5px}.storage-summary{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}.storage-summary span{border:1px solid var(--line);border-radius:999px;padding:5px 8px;background:var(--surface2);font:700 10px/1 var(--mono);color:var(--muted)}.safety-copy{padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface2);color:var(--muted);font-size:12px;line-height:1.5}.safety-option{display:flex;align-items:flex-start;gap:9px;margin-top:12px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface2);font-size:12px;line-height:1.4}.safety-option input{margin-top:2px;width:17px;height:17px;accent-color:var(--accent)}.technical-details{max-height:180px;overflow:auto;padding:10px;border:1px solid var(--line);border-radius:8px;background:#070908;color:#dce8dd;font:10px/1.45 var(--mono);white-space:pre-wrap;overflow-wrap:anywhere}
+.ascii-preview{margin:0;min-height:380px;max-height:64vh;overflow:auto;padding:12px;background:#050706;color:#d4e7d4;border:1px solid var(--line);border-radius:10px;font:10px/1 var(--mono);white-space:pre;letter-spacing:0}
+.help-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.help-card{border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--surface2)}.help-card h3{margin:0 0 7px;font-size:13px}.help-card p,.help-card li{color:var(--muted);font-size:12px;line-height:1.5}.kbd{display:inline-block;padding:2px 5px;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;background:var(--surface);font:700 10px/1 var(--mono);color:var(--text)}
+.toast-region{position:fixed;z-index:1000;right:12px;bottom:12px;display:grid;gap:7px;width:min(380px,calc(100vw - 24px));pointer-events:none}.toast{pointer-events:auto;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;background:var(--surface2);box-shadow:var(--shadow);padding:10px 12px;animation:toast-in .18s ease}.toast.error{border-left-color:var(--danger)}.toast.warn{border-left-color:var(--warn)}.toast b{display:block;font-size:12px}.toast span{display:block;color:var(--muted);font-size:11px;margin-top:3px;line-height:1.35}@keyframes toast-in{from{opacity:0;transform:translateY(8px)}}
+@media(max-width:1120px){:root{--left:278px;--right:278px}.workflow{display:none}.identity p{max-width:280px}.header-actions .label-hide{display:none}}
+@media(max-width:860px){:root{--header:62px}.identity{min-width:0;margin-right:auto}.identity p{display:none}.shell,.shell.left-collapsed,.shell.right-collapsed,.shell.left-collapsed.right-collapsed{grid-template-columns:minmax(0,1fr);position:relative;overflow:hidden}.panel{position:absolute;top:0;bottom:0;width:min(340px,88vw);transition:transform .2s;box-shadow:var(--shadow)}.panel.left{left:0;transform:translateX(-105%)}.panel.right{right:0;transform:translateX(105%)}.shell:not(.left-collapsed) .panel.left{transform:translateX(0)}.shell:not(.right-collapsed) .panel.right{transform:translateX(0)}.panel-inner,.right .panel-inner{width:100%}.workspace{grid-column:1;width:100%;min-width:0}.edge-toggle{top:46%}.header-actions button:not(.mobile-keep){display:none}.help-grid{grid-template-columns:1fr}.stats{max-width:90%}.toolstrip button{min-width:38px}.toolstrip .text-hide{display:none}}
+@media(max-width:520px){.app-header{padding:8px}.mark{width:38px;height:38px}.identity h1{font-size:15px}.status-chip{display:none}.version-chip{height:26px;padding:0 6px;font-size:9px}.toolstrip{padding:5px}.toolstrip button{padding:6px 8px}.stats .stat:nth-child(n+5){display:none}.bottom-strip .progress{display:none}.field-row{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* Batch 3 — Scene Core */
+.camera-readout{margin-top:0;margin-bottom:10px}.camera-readout .metric:last-child{grid-column:auto}.camera-readout #cameraPositionValue{font-size:10px;line-height:1.35;overflow-wrap:anywhere;letter-spacing:-.02em}.camera-group .segment{min-width:58px}.viewport[data-mode="orbit"] canvas:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}.toolstrip .camera-group{background:color-mix(in srgb,var(--accent) 4%,transparent);border-radius:7px;padding-left:5px}.stats #cameraModeStat{border-color:rgba(169,230,110,.35)}
+@media(max-width:520px){.camera-group .mode-label{display:none}.camera-group .segment{min-width:52px}.camera-readout{grid-template-columns:.8fr 1.2fr}}
+@media(min-width:861px){.toolstrip{flex-wrap:wrap}.toolstrip .spacer{flex:1 1 24px}}
+
+/* v1.2.1 — ASCII Vision visual-regression hotfix */
+.ascii-mode-group{background:color-mix(in srgb,var(--accent) 4%,transparent);border-radius:7px;padding-left:5px}.ascii-mode-group .segment{min-width:64px}.render-readout{margin-top:0;margin-bottom:10px}.render-readout b{font-size:11px;line-height:1.25}.color-fields input[type="color"]{padding:3px;height:38px;cursor:pointer}.color-fields input[type="color"]::-webkit-color-swatch-wrapper{padding:0}.color-fields input[type="color"]::-webkit-color-swatch{border:0;border-radius:5px}.color-fields input[type="color"]::-moz-color-swatch{border:0;border-radius:5px}.field-inline input[type="checkbox"]{flex:0 0 auto;width:17px;height:17px;min-height:17px;accent-color:var(--accent)}#outputColumnsRange:disabled{opacity:.42}.stats #renderModeStat,.stats #asciiResolutionStat{border-color:rgba(122,194,230,.35)}
+@media(max-width:1120px){.ascii-mode-group .segment{min-width:58px}.toolstrip .mode-label{display:none}}
+@media(max-width:520px){.ascii-mode-group .segment{min-width:56px}.stats #renderModeStat,.stats #asciiResolutionStat{display:none}}
+</style></head>
+<body>
+<div id="app">
+<header class="app-header">
+<div class="identity">
+<div aria-hidden="true" class="mark">G</div>
+<div><h1>GLYPHSCAPE</h1><p>Living worlds, rendered one character at a time.</p></div>
+</div>
+<div aria-label="Primary workflow" class="workflow"><b>SEED</b><span>→</span><b>SHAPE</b><span>→</span><b>POPULATE</b><span>→</span><b>SIMULATE</b><span>→</span><b>OBSERVE</b><span>→</span><b>CAPTURE</b></div>
+<div class="status-chip" title="Local autosave status"><span class="autosave-dot" id="autosaveDot"></span><span id="autosaveText">Ready</span></div>
+<div class="version-chip" title="Application version">v1.2.1</div>
+<div class="header-actions">
+<button class="mobile-keep" id="newBtn" title="Start a fresh project">＋ <span class="label-hide">New</span></button>
+<button id="projectsBtn" title="Open local projects">▣ <span class="label-hide">Projects</span></button>
+<button aria-label="Undo" class="icon" id="undoBtn" title="Undo (Control or Command + Z)">↶</button>
+<button aria-label="Redo" class="icon" id="redoBtn" title="Redo (Control or Command + Shift + Z)">↷</button>
+<button aria-label="Toggle appearance" class="icon mobile-keep" id="themeBtn" title="Toggle light and dark appearance">◐</button>
+<button aria-label="Help" class="icon mobile-keep" id="helpBtn" title="Help and application information">?</button>
+</div>
+</header>
+<div class="shell" id="shell">
+<aside aria-label="World controls" class="panel left">
+<div class="panel-inner">
+<div class="panel-head"><h2>World</h2><button aria-label="Close world controls" class="icon small" id="closeLeft">×</button></div>
+<details class="section" open="">
+<summary>Project and generation</summary>
+<div class="section-body">
+<div class="field"><label for="projectName">Project name</label><input id="projectName" maxlength="80" type="text" value="Untitled World"/></div>
+<div class="field-row">
+<div class="field"><label for="seedInput">Seed</label><input id="seedInput" maxlength="64" type="text" value="green-shoe"/></div>
+<div class="field"><label for="resolutionSelect">Resolution</label><select id="resolutionSelect"><option value="48">48 × 48</option><option selected="" value="64">64 × 64</option><option value="80">80 × 80</option><option value="96">96 × 96</option></select></div>
+</div>
+<div class="field"><label for="presetSelect">Terrain character</label><select id="presetSelect"><option value="highlands">Highlands</option><option value="archipelago">Archipelago</option><option value="canyon">Canyonlands</option><option value="plateau">Plateau</option><option value="plains">Open Plains</option><option value="crater">Impact Basin</option></select></div>
+<div class="field-row">
+<div class="field"><label for="climateSelect">Climate</label><select id="climateSelect"><option value="temperate">Temperate</option><option value="arid">Arid</option><option value="tropical">Tropical</option><option value="polar">Polar</option><option value="continental">Continental</option></select></div>
+<div class="field"><label for="settlementSelect">Settlements</label><select id="settlementSelect"><option value="0">None</option><option value="2">Sparse</option><option selected="" value="4">Scattered</option><option value="7">Many</option></select></div>
+</div>
+<div class="field"><div class="field-inline"><label for="seaLevel">Sea level</label><span class="value" id="seaValue">34%</span></div><input id="seaLevel" max="70" min="0" type="range" value="34"/></div>
+<div class="field"><div class="field-inline"><label for="roughness">Roughness</label><span class="value" id="roughValue">58%</span></div><input id="roughness" max="100" min="10" type="range" value="58"/></div>
+<div class="button-row"><button class="primary" id="generateBtn">Generate world</button><button id="randomSeedBtn" title="Choose a new deterministic seed without changing other world parameters">Randomize Seed</button></div>
+<div class="button-row"><button class="small" id="loadDemoBtn" title="Load the editable Highland Reach demonstration world as a new project">Load demo</button><button class="small danger" id="freshStartBtn" title="Remove terrain, simulation state, and history while keeping this project">Clear current world</button></div>
+<p class="hint">Generation is deterministic: the same controls and seed produce the same world.</p>
+</div>
+</details>
+<details class="section" open="">
+<summary>Simulation</summary>
+<div class="section-body">
+<div class="button-grid">
+<button class="primary" id="playBtn">▶ Play</button><button id="stepBtn">Step one day</button>
+<button class="small" id="resetSimulationBtn" title="Restore the simulation baseline without changing project settings or camera">Reset simulation</button><button class="small" id="stopSimulationBtn" title="Pause the simulation without resetting it">Stop</button>
+</div>
+<div class="field"><div class="field-inline"><label for="speedRange">Simulation speed</label><span class="value" id="speedValue">1×</span></div><input id="speedRange" max="8" min="1" step="1" type="range" value="1"/></div>
+<div class="field"><label for="eventSelect">Introduce event</label><select id="eventSelect"><option value="rainstorm">Rainstorm</option><option value="drought">Drought</option><option value="wildfire">Wildfire</option><option value="flood">Flood pulse</option><option value="meteor">Meteor impact</option><option value="snowfall">Cold front and snowfall</option><option value="regrow">Vegetation recovery</option><option value="settlement">Found settlement</option><option value="travelers">Add travelers</option><option value="clearfire">Suppress active fire</option></select></div>
+<button id="applyEventBtn" style="width:100%;margin-top:8px">Apply event</button>
+<div class="metric-grid">
+<div class="metric"><span>Day</span><b id="dayMetric">0</b></div><div class="metric"><span>Season</span><b id="seasonMetric">Spring</b></div>
+<div class="metric"><span>Weather</span><b id="weatherMetric">Clear</b></div><div class="metric"><span>Agents</span><b id="agentMetric">0</b></div>
+</div>
+</div>
+</details>
+<details class="section">
+<summary>Visible layers</summary>
+<div class="section-body" id="layerControls">
+<div class="field field-inline"><input checked="" id="layerTerrain" type="checkbox"/><label for="layerTerrain">Terrain and biomes</label></div>
+<div class="field field-inline"><input checked="" id="layerWater" type="checkbox"/><label for="layerWater">Water</label></div>
+<div class="field field-inline"><input checked="" id="layerVegetation" type="checkbox"/><label for="layerVegetation">Vegetation</label></div>
+<div class="field field-inline"><input checked="" id="layerStructures" type="checkbox"/><label for="layerStructures">Structures</label></div>
+<div class="field field-inline"><input checked="" id="layerAgents" type="checkbox"/><label for="layerAgents">Agents</label></div>
+<div class="field field-inline"><input checked="" id="layerWeather" type="checkbox"/><label for="layerWeather">Weather effects</label></div>
+</div>
+</details>
+<details class="section">
+<summary>World history</summary>
+<div class="section-body"><div aria-label="World event log" class="log" id="eventLog"></div><button class="small ghost" id="clearLogBtn" style="width:100%;margin-top:6px">Clear log</button></div>
+</details>
+</div>
+</aside>
+<main class="workspace">
+<nav aria-label="Workspace tools" class="toolstrip">
+<div class="group"><span class="mode-label">TOOL</span><button class="mode-btn small active" data-mode="orbit" title="Orbit: left-drag to tumble; right or Alt-drag to roll; Shift or middle-drag to pan. Free Fly adds W A S D and Q/E movement.">Navigate</button><button class="mode-btn small" data-mode="inspect">Inspect</button><button class="mode-btn small" data-mode="sculpt">Sculpt</button><button class="mode-btn small" data-mode="paint">Paint</button></div>
+<div class="group camera-group"><span class="mode-label">CAMERA</span><button class="segment small active" id="cameraOrbitBtn" title="Orbit around a focus point">Orbit</button><button class="segment small" id="cameraFlyBtn" title="Move through the scene with W A S D and Q/E">Fly</button><button class="segment small" id="cameraTopBtn" title="Apply a top-down orthographic camera">Top</button><button class="segment small" id="cameraIsoBtn" title="Apply an isometric orthographic camera">Iso</button></div>
+<div class="group ascii-mode-group"><span class="mode-label">ASCII</span><button class="segment small" id="renderShadedBtn" title="Select glyphs from lighting and luminance">Shaded</button><button class="segment small" id="renderSemanticBtn" title="Select glyphs from materials and entities">Semantic</button><button class="segment small active" id="renderHybridBtn" title="Combine semantic identity with lighting, depth, and edges">Hybrid</button></div>
+<div class="group"><span class="mode-label">VIEW</span><button class="segment small active" id="perspectiveBtn">Perspective</button><button class="segment small" id="orthoBtn">Orthographic</button><button class="small" id="resetCameraBtn" title="Reset camera">Reset</button><button class="small" id="frameWorldBtn" title="Center and fit the whole world in a perspective Orbit view">Frame</button></div>
+<div class="group"><button class="small" id="textPreviewBtn">ASCII text</button><button class="small" id="capturePngBtn">Capture</button></div>
+
+</nav>
+<section aria-label="GLYPHSCAPE world viewport" class="viewport" data-mode="orbit" id="viewport">
+<canvas aria-label="Interactive true three-dimensional ASCII scene with Shaded, Semantic, and Hybrid character rendering. Navigate with Orbit, Free Fly, Top Down, or Isometric views; use Inspect, Sculpt, or Paint for ray-cast world interaction." id="worldCanvas" tabindex="0"></canvas>
+<div aria-hidden="true" class="canvas-overlay">
+<div class="stats"><span class="stat" id="fpsStat">Frame rate —</span><span class="stat" id="worldStat">64 × 64</span><span class="stat" id="elevationStat">Elevation —</span><span class="stat" id="pointerModeStat">Orbit mode</span><span class="stat" id="projectionStat">Perspective</span><span class="stat" id="cameraModeStat">Orbit</span><span class="stat" id="renderModeStat">Hybrid ASCII</span><span class="stat" id="asciiResolutionStat">ASCII —</span></div>
+<button class="sample-flag" id="sampleFlag" title="Remove the demonstration world">DEMO WORLD — CLEAR</button>
+<div class="selection-callout" id="selectionCallout"></div>
+</div>
+<div class="empty-state" hidden="" id="emptyState"><div class="empty-card"><h2>Blank world</h2><p>Choose a terrain character and seed, then generate a world—or intentionally load the editable demonstration.</p><div class="button-row"><button class="primary" id="emptyGenerateBtn">Generate world</button><button id="emptyDemoBtn">Load demo</button></div></div></div>
+</section>
+<footer class="bottom-strip"><span class="message" id="statusMessage">Ready.</span><span class="grow"></span><span id="cellStatus">No cell selected</span><div class="progress" title="Simulation progress through current season"><i id="seasonProgress"></i></div></footer>
+<button aria-label="Open or close world controls" class="edge-toggle left" id="toggleLeft">◀</button>
+<button aria-label="Open or close inspector" class="edge-toggle right" id="toggleRight">▶</button>
+</main>
+<aside aria-label="Contextual inspector" class="panel right">
+<div class="panel-inner">
+<div class="panel-head"><h2>Inspector</h2><button aria-label="Close inspector" class="icon small" id="closeRight">×</button></div>
+<details class="section" open="">
+<summary>Selected cell</summary>
+<div class="section-body"><div class="hint" id="selectionEmpty">Use Inspect mode and choose a cell in the world.</div><div hidden="" id="selectionDetails"><div class="metric-grid"><div class="metric"><span>Coordinate</span><b id="selCoord">—</b></div><div class="metric"><span>Biome</span><b id="selBiome">—</b></div><div class="metric"><span>Elevation</span><b id="selElevation">—</b></div><div class="metric"><span>Water</span><b id="selWater">—</b></div><div class="metric"><span>Moisture</span><b id="selMoisture">—</b></div><div class="metric"><span>Vegetation</span><b id="selVegetation">—</b></div></div><button class="small" id="focusSelectionBtn" style="width:100%;margin-top:8px">Focus camera here</button></div></div>
+</details>
+<details class="section" open="">
+<summary>Contextual tool</summary>
+<div class="section-body">
+<div id="orbitTool"><p class="hint"><strong>Navigate:</strong> Orbit tumbles around the current focus point. Free Fly moves the camera through the scene with <span class="kbd">W A S D</span>, <span class="kbd">Q/E</span>, drag-to-look, and wheel-adjusted speed. Right-drag or <span class="kbd">Alt/Option</span>-drag rolls either camera.</p></div>
+<div hidden="" id="inspectTool"><p class="hint">Select the nearest visible world cell to review its conditions and coordinates.</p></div>
+<div hidden="" id="sculptTool">
+<div class="field"><label for="sculptAction">Sculpt action</label><select id="sculptAction"><option value="raise">Raise</option><option value="lower">Lower</option><option value="smooth">Smooth</option></select></div>
+<div class="field"><div class="field-inline"><label for="brushRadius">Brush radius</label><span class="value" id="radiusValue">3</span></div><input id="brushRadius" max="10" min="1" type="range" value="3"/></div>
+<div class="field"><div class="field-inline"><label for="brushStrength">Strength</label><span class="value" id="strengthValue">40%</span></div><input id="brushStrength" max="100" min="5" type="range" value="40"/></div>
+</div>
+<div hidden="" id="paintTool">
+<div class="field"><label for="paintLayer">Paint property</label><select id="paintLayer"><option value="moisture">Moisture</option><option value="temperature">Temperature</option><option value="vegetation">Vegetation</option><option value="water">Surface water</option><option value="fire">Fire</option></select></div>
+<div class="field"><div class="field-inline"><label for="paintValue">Target value</label><span class="value" id="paintValueLabel">70%</span></div><input id="paintValue" max="100" min="0" type="range" value="70"/></div>
+<div class="field"><div class="field-inline"><label for="paintRadius">Brush radius</label><span class="value" id="paintRadiusValue">3</span></div><input id="paintRadius" max="10" min="1" type="range" value="3"/></div>
+</div>
+</div>
+</details>
+<details class="section" open="">
+<summary>ASCII vision</summary>
+<div class="section-body">
+<div class="metric-grid render-readout"><div class="metric"><span>Mode</span><b id="renderModeValue">Hybrid</b></div><div class="metric"><span>Frame</span><b id="asciiResolutionValue">Auto</b></div></div>
+<div class="field"><label for="glyphSet">Glyph ramp</label><select id="glyphSet"><option value="classic">Classic</option><option value="dense">Dense</option><option value="minimal">Minimal</option><option value="technical">Technical</option><option value="soft">Soft</option><option value="organic">Organic</option><option value="blocks">Blocks</option></select></div>
+<div class="field"><label for="colorModeSelect">Color mode</label><select id="colorModeSelect"><option value="material">Material colors</option><option value="monochrome">Monochrome</option><option value="two-tone">Two-tone</option><option value="depth">Depth gradient</option></select></div>
+<div class="field"><label for="paletteSelect">Palette</label><select id="paletteSelect"><option value="natural">Natural</option><option value="amber">Amber terminal</option><option value="green">Green phosphor</option><option value="mono">Neutral</option><option value="ice">Ice and ember</option><option value="accessible">Accessible contrast</option></select></div>
+<div class="field-row color-fields"><div class="field"><label for="backgroundColor">Background</label><input id="backgroundColor" type="color" value="#060807"/></div><div class="field"><label for="foregroundColor">Foreground</label><input id="foregroundColor" type="color" value="#dce8dd"/></div></div>
+<div class="field field-inline"><input checked="" id="autoResolutionToggle" type="checkbox"/><label for="autoResolutionToggle">Automatic character resolution</label></div>
+<div class="field field-inline"><input checked="" id="adaptiveResolutionToggle" type="checkbox"/><label for="adaptiveResolutionToggle">Reduce resolution while moving</label></div>
+<div class="field"><div class="field-inline"><label for="outputColumnsRange">Output columns</label><span class="value" id="outputColumnsValue">112</span></div><input id="outputColumnsRange" max="180" min="48" step="4" type="range" value="112"/></div>
+<div class="field"><div class="field-inline"><label for="detailRange">Scene geometry detail</label><span class="value" id="detailValue">100%</span></div><input id="detailRange" max="100" min="35" step="5" type="range" value="100"/></div>
+<div class="field"><div class="field-inline"><label for="contrastRange">Contrast</label><span class="value" id="contrastValue">108%</span></div><input id="contrastRange" max="180" min="50" step="4" type="range" value="108"/></div>
+<div class="field"><div class="field-inline"><label for="exposureRange">Exposure</label><span class="value" id="exposureValue">0.0 EV</span></div><input id="exposureRange" max="200" min="-200" step="10" type="range" value="0"/></div>
+<div class="field"><div class="field-inline"><label for="edgeStrengthRange">Edge strength</label><span class="value" id="edgeStrengthValue">62%</span></div><input id="edgeStrengthRange" max="150" min="0" step="5" type="range" value="62"/></div>
+<div class="field"><div class="field-inline"><label for="depthFadeRange">Depth fade</label><span class="value" id="depthFadeValue">18%</span></div><input id="depthFadeRange" max="100" min="0" step="5" type="range" value="18"/></div>
+<p class="hint">Shaded maps light to density. Semantic preserves material and entity symbols. Hybrid combines both with silhouettes and depth.</p>
+</div>
+</details>
+<details class="section">
+<summary>Camera and navigation</summary>
+<div class="section-body"><div class="metric-grid camera-readout"><div class="metric"><span>Mode</span><b id="cameraModeValue">Orbit</b></div><div class="metric"><span>Position</span><b id="cameraPositionValue">—</b></div></div>
+<div class="field"><div class="field-inline"><label for="yawRange">Yaw</label><span class="value" id="yawValue">-38°</span></div><input id="yawRange" max="180" min="-180" type="range" value="-38"/></div>
+<div class="field"><div class="field-inline"><label for="pitchRange">Pitch</label><span class="value" id="pitchValue">-28°</span></div><input id="pitchRange" max="180" min="-180" type="range" value="-28"/></div>
+<div class="field"><div class="field-inline"><label for="rollRange">Roll</label><span class="value" id="rollValue">0°</span></div><input id="rollRange" max="180" min="-180" type="range" value="0"/></div>
+<div class="field"><div class="field-inline"><label for="zoomRange">Zoom</label><span class="value" id="zoomValue">1.00×</span></div><input id="zoomRange" max="260" min="35" type="range" value="100"/></div><div class="field"><div class="field-inline"><label for="fovRange">Field of view</label><span class="value" id="fovValue">48°</span></div><input id="fovRange" max="100" min="20" step="1" type="range" value="48"/></div><div class="field"><div class="field-inline"><label for="flySpeedRange">Free Fly speed</label><span class="value" id="flySpeedValue">1.0 units</span></div><input id="flySpeedRange" max="80" min="1" step="1" type="range" value="10"/></div>
+<p class="hint">Orbit preserves unrestricted 360° yaw, pitch, and roll. Free Fly uses W A S D for horizontal movement, Q/E vertically, Shift for faster movement, drag to look, and the wheel to change travel speed.</p>
+</div>
+</details>
+<details class="section" open="">
+<summary>Capture and project files</summary>
+<div class="section-body">
+<div class="field"><label for="captureResolutionSelect">Capture resolution</label><select id="captureResolutionSelect"><option value="0">Match viewport</option><option value="96">96 columns</option><option value="128">128 columns</option><option selected="" value="160">160 columns</option><option value="200">200 columns</option></select></div><div class="button-grid"><button id="exportJsonBtn" title="Export the complete project as JavaScript Object Notation (JSON)">Export project</button><button id="importJsonBtn" title="Import a GLYPHSCAPE project">Import project</button><button id="exportTextBtn" title="Export the current frame as plain text">Export text</button><button id="exportSvgBtn" title="Export Scalable Vector Graphics (SVG)">Export SVG</button><button id="exportPngBtn" title="Export Portable Network Graphics (PNG)">Export PNG</button><button id="exportHtmlBtn" title="Export standalone HyperText Markup Language (HTML)">Export HTML</button></div>
+<input accept="application/json,.json" class="sr-only" id="importFile" type="file"/>
+<p class="hint">Exports are created locally. Nothing is uploaded or transmitted.</p>
+</div>
+</details>
+<details class="section">
+<summary>Biome legend</summary><div class="section-body"><div class="legend" id="biomeLegend"></div></div>
+</details>
+</div>
+</aside>
+</div>
+</div>
+<dialog id="projectsDialog">
+<div class="dialog-head"><h2>Local projects</h2><button aria-label="Close projects" class="icon" data-close-dialog="projectsDialog">×</button></div>
+<div class="dialog-body">
+<div aria-live="polite" class="storage-summary" id="storageSummary"><span>Reading storage…</span></div>
+<p class="hint" style="margin:0 0 10px">Projects remain in this browser profile. Export project files for durable backups outside browser storage.</p>
+<div class="project-list" id="projectList"></div>
+</div>
+<div class="dialog-foot"><button class="danger" id="clearAllDataBtn">Clear all local data</button><button id="duplicateCurrentBtn">Duplicate current</button><button class="primary" id="saveProjectBtn">Save current project</button><button data-close-dialog="projectsDialog">Close</button></div>
+</dialog>
+<dialog id="safetyDialog">
+<div class="dialog-head"><h2 id="safetyTitle">Confirm action</h2><button aria-label="Cancel action" class="icon" id="safetyCloseBtn">×</button></div>
+<div class="dialog-body">
+<div class="safety-copy" id="safetyMessage"></div>
+<label class="safety-option" id="safetyRecoveryWrap"><input checked="" id="safetyRecovery" type="checkbox"/><span><strong>Download a recovery copy first</strong><br/>Creates a local JavaScript Object Notation (JSON) backup before the action continues.</span></label>
+</div>
+<div class="dialog-foot"><button id="safetyCancelBtn">Cancel</button><button class="danger" id="safetyConfirmBtn">Continue</button></div>
+</dialog>
+<dialog id="recoveryDialog">
+<div class="dialog-head"><h2>Project recovery required</h2></div>
+<div class="dialog-body">
+<p class="safety-copy" id="recoverySummary">A stored project could not be opened safely.</p>
+<p class="hint">GLYPHSCAPE has not overwritten the damaged active copy. You may download it for inspection, retry, or continue in a temporary blank session.</p>
+<details class="section" style="margin-top:12px"><summary>Technical details</summary><div class="section-body"><pre class="technical-details" id="recoveryTechnical"></pre><button class="small" id="copyRecoveryDetailsBtn" style="margin-top:8px">Copy details</button></div></details>
+</div>
+<div class="dialog-foot"><button id="downloadRecoveryBtn">Download recoverable data</button><button id="retryRecoveryBtn">Retry</button><button class="primary" id="continueSessionBtn">Continue session only</button><button class="danger" id="replaceDamagedBtn">Back up and replace</button></div>
+</dialog>
+<dialog id="textDialog">
+<div class="dialog-head"><h2>Current ASCII frame</h2><button aria-label="Close text preview" class="icon" data-close-dialog="textDialog">×</button></div>
+<div class="dialog-body"><pre class="ascii-preview" id="asciiPreview" tabindex="0"></pre></div>
+<div class="dialog-foot"><button id="copyTextBtn">Copy text</button><button class="primary" id="downloadTextDialogBtn">Download text</button><button data-close-dialog="textDialog">Close</button></div>
+</dialog>
+<dialog id="helpDialog">
+<div class="dialog-head"><h2>GLYPHSCAPE v1.2.1</h2><button aria-label="Close help" class="icon" data-close-dialog="helpDialog">×</button></div>
+<div class="dialog-body">
+<p>GLYPHSCAPE is a local-first instrument for creating and observing evolving worlds in a <strong>true three-dimensional scene</strong> rendered as animated American Standard Code for Information Interchange (ASCII) art. The primary workflow is <strong>SEED → SHAPE → POPULATE → SIMULATE → OBSERVE → CAPTURE</strong>.</p>
+<div class="help-grid">
+<section class="help-card"><h3>Navigation</h3><p>Use <strong>Orbit</strong> for unrestricted yaw, pitch, and roll, <strong>Free Fly</strong> to move through the scene, and the <strong>Top</strong> or <strong>Iso</strong> presets for stable map and diorama views. Drag to look, right-drag or Alt-drag to roll, and double-click terrain to focus it.</p></section>
+<section class="help-card"><h3>ASCII vision</h3><p><strong>Shaded</strong> maps scene light to a glyph ramp. <strong>Semantic</strong> preserves recognizable material and entity symbols. <strong>Hybrid</strong> combines semantic identity with luminance, depth fade, and detected silhouettes. Automatic resolution preserves character proportions; adaptive resolution temporarily reduces work during movement or expensive renders, then automatically returns to full detail after the scene settles.</p></section>
+<section class="help-card"><h3>Editing</h3><p>Inspect, Sculpt, and Paint now use terrain ray casting against the continuous three-dimensional surface. Each completed editing stroke remains one undoable transaction.</p></section>
+<section class="help-card"><h3>Simulation</h3><p>Play advances fixed world steps. Water redistributes, plants grow or decline, fire spreads and exhausts fuel, weather changes, and agents travel.</p></section>
+<section class="help-card"><h3>Privacy and storage</h3><p>All processing occurs locally. Schema version 4 projects use Indexed Database storage with a local active-project fallback, strict migration from earlier projects, and a session-only recovery mode. No account, telemetry, advertising, tracking, or silent network transmission is included.</p></section>
+<section class="help-card"><h3>Keyboard</h3><p><span class="kbd">O</span> Orbit · <span class="kbd">T</span> Top · <span class="kbd">V</span> Isometric · <span class="kbd">I</span> Inspect · <span class="kbd">S</span> Sculpt · <span class="kbd">P</span> Paint · Arrow keys rotate · <span class="kbd">Alt/Option + ←/→</span> roll · <span class="kbd">W A S D</span> fly · <span class="kbd">Q/E</span> down/up · <span class="kbd">F</span> focus · <span class="kbd">Space</span> play/pause · <span class="kbd">Ctrl/⌘ Z</span> undo.</p></section>
+<section class="help-card"><h3>Backups and recovery</h3><p>Use Project — JavaScript Object Notation (JSON) for durable backups. Destructive project actions can create a recovery copy first, and unreadable stored data is preserved until you explicitly replace or delete it.</p></section>
+</div>
+</div>
+<div class="dialog-foot"><button class="primary" data-close-dialog="helpDialog">Done</button></div>
+</dialog>
+<div aria-atomic="false" aria-live="polite" class="toast-region" id="toastRegion"></div>
+<script>/* GLYPHSCAPE Scene Core v1.2.1
+ * Dependency-free software 3D scene system for height-field terrain,
+ * sparse scene entities, character-cell rasterization, camera transforms,
+ * depth testing, and terrain ray casting.
+ */
+'use strict';
+(() => {
+  const EPSILON = 1e-7;
+  const MATERIAL = Object.freeze({EMPTY:0,TERRAIN:1,WATER:2,STRUCTURE:3,AGENT:4,BLOCK:5});
+  const KIND = Object.freeze({EMPTY:0,TERRAIN:1,WATER:2,STRUCTURE:3,AGENT:4,BLOCK:5});
+  const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
+  const add=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]];
+  const sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
+  const scale=(a,s)=>[a[0]*s,a[1]*s,a[2]*s];
+  const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+  const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+  const length=a=>Math.hypot(a[0],a[1],a[2]);
+  const normalize=a=>{const l=length(a)||1;return[a[0]/l,a[1]/l,a[2]/l]};
+  const lerp=(a,b,t)=>a+(b-a)*t;
+
+  function orientationBasis(yaw,pitch,roll){
+    const cp=Math.cos(pitch),sp=Math.sin(pitch),cy=Math.cos(yaw),sy=Math.sin(yaw);
+    const forward=normalize([sy*cp,sp,-cy*cp]);
+    let right=normalize(cross(forward,[0,1,0]));
+    if(length(right)<EPSILON)right=[Math.cos(yaw),0,Math.sin(yaw)];
+    let up=normalize(cross(right,forward));
+    const cr=Math.cos(roll||0),sr=Math.sin(roll||0);
+    const rolledRight=add(scale(right,cr),scale(up,sr));
+    const rolledUp=add(scale(up,cr),scale(right,-sr));
+    return{forward,right:normalize(rolledRight),up:normalize(rolledUp)};
+  }
+
+  function worldVerticalScale(world,scene=null){return Math.max(4,world.n*clamp(Number(scene?.verticalScaleFactor)||.24,.05,2))}
+  function defaultOrbitDistance(world){return Math.max(18,world.n*1.24)}
+  function terrainHeightAtGrid(world,generation,x,z){
+    const gx=clamp(x,0,world.n-1),gz=clamp(z,0,world.n-1),x0=Math.floor(gx),z0=Math.floor(gz),x1=Math.min(world.n-1,x0+1),z1=Math.min(world.n-1,z0+1),tx=gx-x0,tz=gz-z0;
+    const h00=world.height[z0*world.n+x0],h10=world.height[z0*world.n+x1],h01=world.height[z1*world.n+x0],h11=world.height[z1*world.n+x1];
+    return lerp(lerp(h00,h10,tx),lerp(h01,h11,tx),tz);
+  }
+  function gridHeightToWorld(world,generation,height,scene=null){return(height-generation.seaLevel)*worldVerticalScale(world,scene)}
+  function gridToWorld(world,generation,x,z,height=terrainHeightAtGrid(world,generation,x,z),scene=null){
+    const half=(world.n-1)/2;
+    return[x-half,gridHeightToWorld(world,generation,height,scene),z-half];
+  }
+  function worldToGrid(world,x,z){const half=(world.n-1)/2;return[x+half,z+half]}
+  function sampleTerrainWorld(world,generation,x,z,scene=null){
+    const[gx,gz]=worldToGrid(world,x,z);
+    if(gx<0||gz<0||gx>world.n-1||gz>world.n-1)return null;
+    const height=terrainHeightAtGrid(world,generation,gx,gz);
+    return{gx,gz,height,y:gridHeightToWorld(world,generation,height,scene)};
+  }
+
+  function normalizeView(view,world){
+    const basis=orientationBasis(view.yaw||0,view.pitch||0,view.roll||0),zoom=clamp(Number(view.zoom)||1,.08,12),distance=defaultOrbitDistance(world)/zoom;
+    const target=[Number(view.targetX)||0,Number(view.targetY)||0,Number(view.targetZ)||0];
+    const orbitPosition=sub(target,scale(basis.forward,distance));
+    const freePosition=[
+      Number.isFinite(Number(view.positionX))?Number(view.positionX):orbitPosition[0],
+      Number.isFinite(Number(view.positionY))?Number(view.positionY):orbitPosition[1],
+      Number.isFinite(Number(view.positionZ))?Number(view.positionZ):orbitPosition[2]
+    ];
+    const mode=view.cameraMode==='fly'?'fly':'orbit';
+    return{
+      mode,position:mode==='fly'?freePosition:orbitPosition,target,basis,distance,
+      projection:view.projection==='orthographic'?'orthographic':'perspective',
+      fov:clamp(Number(view.fov)||48,20,100)*Math.PI/180,
+      near:clamp(Number(view.near)||.15,.02,20),
+      far:Math.max(Number(view.far)||world.n*6,world.n*2),
+      orthoHeight:Math.max(5,world.n*.94/zoom)
+    };
+  }
+  function cameraForView(view,world,viewportWidth=1,viewportHeight=1){
+    const c=normalizeView(view,world);c.aspect=Math.max(.1,viewportWidth/Math.max(1,viewportHeight));return c;
+  }
+  function projectPoint(point,camera,width,height){
+    const rel=sub(point,camera.position),cx=dot(rel,camera.basis.right),cy=dot(rel,camera.basis.up),cz=dot(rel,camera.basis.forward);
+    if(cz<=camera.near||cz>=camera.far)return null;
+    let ndcX,ndcY;
+    if(camera.projection==='orthographic'){
+      const halfH=camera.orthoHeight*.5,halfW=halfH*camera.aspect;ndcX=cx/halfW;ndcY=cy/halfH;
+    }else{
+      const tan=Math.tan(camera.fov*.5),halfY=cz*tan,halfX=halfY*camera.aspect;ndcX=cx/halfX;ndcY=cy/halfY;
+    }
+    if(!Number.isFinite(ndcX)||!Number.isFinite(ndcY))return null;
+    return{x:(ndcX*.5+.5)*width,y:(.5-ndcY*.5)*height,depth:cz,ndcX,ndcY};
+  }
+  function rayFromScreen(px,py,width,height,camera){
+    const ndcX=px/Math.max(1,width)*2-1,ndcY=1-py/Math.max(1,height)*2;
+    if(camera.projection==='orthographic'){
+      const halfH=camera.orthoHeight*.5,halfW=halfH*camera.aspect;
+      return{origin:add(camera.position,add(scale(camera.basis.right,ndcX*halfW),scale(camera.basis.up,ndcY*halfH))),direction:camera.basis.forward.slice()};
+    }
+    const tan=Math.tan(camera.fov*.5);
+    return{origin:camera.position.slice(),direction:normalize(add(camera.basis.forward,add(scale(camera.basis.right,ndcX*tan*camera.aspect),scale(camera.basis.up,ndcY*tan))))};
+  }
+
+  function createFrame(cols,rows){
+    const len=cols*rows,depth=new Float32Array(len);depth.fill(Infinity);
+    const cellX=new Int16Array(len),cellY=new Int16Array(len),objectIndex=new Int32Array(len);cellX.fill(-1);cellY.fill(-1);objectIndex.fill(-1);
+    return{cols,rows,depth,luminance:new Float32Array(len),normalX:new Float32Array(len),normalY:new Float32Array(len),normalZ:new Float32Array(len),edge:new Float32Array(len),material:new Uint8Array(len),kind:new Uint8Array(len),cellX,cellY,objectIndex,filled:0,triangles:0,depthMin:Infinity,depthMax:0,camera:null};
+  }
+  function edge(ax,ay,bx,by,cx,cy){return(cx-ax)*(by-ay)-(cy-ay)*(bx-ax)}
+  function rasterizeTriangle(frame,a,b,c,meta,camera){
+    const pa=projectPoint(a.position,camera,frame.cols,frame.rows),pb=projectPoint(b.position,camera,frame.cols,frame.rows),pc=projectPoint(c.position,camera,frame.cols,frame.rows);
+    if(!pa||!pb||!pc)return;
+    const area=edge(pa.x,pa.y,pb.x,pb.y,pc.x,pc.y);if(Math.abs(area)<EPSILON)return;
+    const minX=Math.max(0,Math.floor(Math.min(pa.x,pb.x,pc.x))),maxX=Math.min(frame.cols-1,Math.ceil(Math.max(pa.x,pb.x,pc.x))),minY=Math.max(0,Math.floor(Math.min(pa.y,pb.y,pc.y))),maxY=Math.min(frame.rows-1,Math.ceil(Math.max(pa.y,pb.y,pc.y)));
+    if(minX>maxX||minY>maxY)return;frame.triangles++;
+    let normal=meta.normal||normalize(cross(sub(b.position,a.position),sub(c.position,a.position)));
+    const center=scale(add(add(a.position,b.position),c.position),1/3),toCamera=normalize(sub(camera.position,center)),front=dot(normal,toCamera)>=0;if(!front)normal=scale(normal,-1);
+    const light=normalize([.42,.86,.28]),diffuse=Math.max(0,dot(normal,light)),side=Math.max(0,dot(normal,normalize([-.55,.35,-.65]))),backside=front?1:.52,luminance=clamp((.20+diffuse*.68+side*.12)*backside,.05,1),invArea=1/area;
+    for(let y=minY;y<=maxY;y++)for(let x=minX;x<=maxX;x++){
+      const sx=x+.5,sy=y+.5,w0=edge(pb.x,pb.y,pc.x,pc.y,sx,sy)*invArea,w1=edge(pc.x,pc.y,pa.x,pa.y,sx,sy)*invArea,w2=1-w0-w1;if(w0<-EPSILON||w1<-EPSILON||w2<-EPSILON)continue;
+      const depth=pa.depth*w0+pb.depth*w1+pc.depth*w2,i=y*frame.cols+x;if(depth>=frame.depth[i])continue;
+      const wasEmpty=!Number.isFinite(frame.depth[i]);frame.depth[i]=depth;frame.luminance[i]=luminance;frame.normalX[i]=normal[0];frame.normalY[i]=normal[1];frame.normalZ[i]=normal[2];frame.material[i]=meta.material;frame.kind[i]=meta.kind;frame.cellX[i]=Math.round(a.gx*w0+b.gx*w1+c.gx*w2);frame.cellY[i]=Math.round(a.gz*w0+b.gz*w1+c.gz*w2);frame.objectIndex[i]=meta.objectIndex??-1;if(wasEmpty)frame.filled++;
+    }
+  }
+  function makeVertex(world,generation,gx,gz,height,scene=null){return{position:gridToWorld(world,generation,gx,gz,height,scene),gx,gz}}
+  function renderTerrain(frame,world,generation,view,camera,scene){
+    if(!view.layers?.terrain&&!view.layers?.water)return;
+    const n=world.n,detail=clamp(Number(view.detail)||1,.1,1),step=detail<.48?3:detail<.78?2:1;
+    for(let z=0;z<n-1;z+=step)for(let x=0;x<n-1;x+=step){
+      const x1=Math.min(n-1,x+step),z1=Math.min(n-1,z+step),i00=z*n+x,i10=z*n+x1,i01=z1*n+x,i11=z1*n+x1;
+      if(view.layers?.terrain){
+        const v00=makeVertex(world,generation,x,z,world.height[i00],scene),v10=makeVertex(world,generation,x1,z,world.height[i10],scene),v01=makeVertex(world,generation,x,z1,world.height[i01],scene),v11=makeVertex(world,generation,x1,z1,world.height[i11],scene);
+        rasterizeTriangle(frame,v00,v01,v10,{material:MATERIAL.TERRAIN,kind:KIND.TERRAIN},camera);rasterizeTriangle(frame,v10,v01,v11,{material:MATERIAL.TERRAIN,kind:KIND.TERRAIN},camera);
+      }
+      if(view.layers?.water){
+        const wet00=world.water[i00]>.018||world.height[i00]<generation.seaLevel,wet10=world.water[i10]>.018||world.height[i10]<generation.seaLevel,wet01=world.water[i01]>.018||world.height[i01]<generation.seaLevel,wet11=world.water[i11]>.018||world.height[i11]<generation.seaLevel;
+        const waterHeight=index=>world.height[index]<generation.seaLevel?generation.seaLevel:Math.min(1,world.height[index]+world.water[index]*.16);
+        const v00=makeVertex(world,generation,x,z,waterHeight(i00),scene),v10=makeVertex(world,generation,x1,z,waterHeight(i10),scene),v01=makeVertex(world,generation,x,z1,waterHeight(i01),scene),v11=makeVertex(world,generation,x1,z1,waterHeight(i11),scene);
+        if(Number(wet00)+Number(wet01)+Number(wet10)>=2)rasterizeTriangle(frame,v00,v01,v10,{material:MATERIAL.WATER,kind:KIND.WATER,normal:[0,1,0]},camera);
+        if(Number(wet10)+Number(wet01)+Number(wet11)>=2)rasterizeTriangle(frame,v10,v01,v11,{material:MATERIAL.WATER,kind:KIND.WATER,normal:[0,1,0]},camera);
+      }
+    }
+  }
+  function rotateY(point,angle){const c=Math.cos(angle),s=Math.sin(angle);return[point[0]*c-point[2]*s,point[1],point[0]*s+point[2]*c]}
+  function transformedVertex(local,center,angle,gx,gz){const p=rotateY(local,angle);return{position:add(center,p),gx,gz}}
+  function boxTriangles(center,angle,size,gx,gz){
+    const[w,h,d]=size,hx=w*.5,hz=d*.5,locals=[[-hx,0,-hz],[hx,0,-hz],[hx,0,hz],[-hx,0,hz],[-hx,h,-hz],[hx,h,-hz],[hx,h,hz],[-hx,h,hz]],v=locals.map(p=>transformedVertex(p,center,angle,gx,gz)),faces=[[0,2,1],[0,3,2],[4,5,6],[4,6,7],[0,1,5],[0,5,4],[1,2,6],[1,6,5],[2,3,7],[2,7,6],[3,0,4],[3,4,7]];return faces.map(f=>[v[f[0]],v[f[1]],v[f[2]]]);
+  }
+  function renderBlocks(frame,world,generation,view,camera,scene){
+    if(!view.layers?.structures)return;
+    (world.blocks||[]).forEach((block,index)=>{if(block.visible===false)return;const gx=clamp(Number(block.x)||0,0,world.n-1),gz=clamp(Number(block.y)||0,0,world.n-1),base=gridToWorld(world,generation,gx,gz,terrainHeightAtGrid(world,generation,gx,gz),scene);base[1]+=Number(block.elevationOffset)||0;const angle=Number(block.rotation)||0,size=[clamp(Number(block.scaleX)||1,.1,24),clamp(Number(block.scaleY)||1,.05,24),clamp(Number(block.scaleZ)||1,.1,24)];for(const tri of boxTriangles(base,angle,size,gx,gz))rasterizeTriangle(frame,tri[0],tri[1],tri[2],{material:MATERIAL.BLOCK,kind:KIND.BLOCK,objectIndex:index},camera);});
+  }
+  function renderStructures(frame,world,generation,view,camera,scene){
+    if(!view.layers?.structures)return;
+    world.structures.forEach((structure,index)=>{if(structure.visible===false)return;const gx=clamp(Number(structure.x)||0,0,world.n-1),gz=clamp(Number(structure.y)||0,0,world.n-1),base=gridToWorld(world,generation,gx,gz,terrainHeightAtGrid(world,generation,gx,gz),scene);base[1]+=Number(structure.elevationOffset)||0;const scaleValue=clamp(Number(structure.scale)||1,.1,12),angle=Number(structure.rotation)||0,size=structure.type==='tower'?[1.25*scaleValue,4.4*scaleValue,1.25*scaleValue]:[2.35*scaleValue,2.2*scaleValue,2.05*scaleValue];for(const tri of boxTriangles(base,angle,size,gx,gz))rasterizeTriangle(frame,tri[0],tri[1],tri[2],{material:MATERIAL.STRUCTURE,kind:KIND.STRUCTURE,objectIndex:index},camera);
+      if(structure.type!=='tower'){const roofBase=add(base,[0,size[1],0]),hw=size[0]*.58,hd=size[2]*.58,rh=size[1]*.5,locals=[[-hw,0,-hd],[hw,0,-hd],[hw,0,hd],[-hw,0,hd],[0,rh,-hd],[0,rh,hd]].map(p=>transformedVertex(p,roofBase,angle,gx,gz)),faces=[[0,1,4],[3,5,2],[0,4,5],[0,5,3],[1,2,5],[1,5,4]];for(const f of faces)rasterizeTriangle(frame,locals[f[0]],locals[f[1]],locals[f[2]],{material:MATERIAL.STRUCTURE,kind:KIND.STRUCTURE,objectIndex:index},camera);}
+    });
+  }
+  function renderAgents(frame,world,generation,view,camera,scene){if(!view.layers?.agents)return;world.agents.forEach((agent,index)=>{if(agent.visible===false)return;const gx=clamp(Number(agent.x)||0,0,world.n-1),gz=clamp(Number(agent.y)||0,0,world.n-1),base=gridToWorld(world,generation,gx,gz,terrainHeightAtGrid(world,generation,gx,gz),scene),angle=Number(agent.heading)||0;for(const tri of boxTriangles(add(base,[0,.05,0]),angle,[.52,1.25,.52],gx,gz))rasterizeTriangle(frame,tri[0],tri[1],tri[2],{material:MATERIAL.AGENT,kind:KIND.AGENT,objectIndex:index},camera);});}
+  function finalizeFrame(frame){
+    let min=Infinity,max=0;
+    for(let i=0;i<frame.depth.length;i++)if(Number.isFinite(frame.depth[i])){min=Math.min(min,frame.depth[i]);max=Math.max(max,frame.depth[i])}
+    frame.depthMin=min;frame.depthMax=max;
+    const dirs=[[-1,0],[1,0],[0,-1],[0,1]],cols=frame.cols,rows=frame.rows;
+    for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
+      const i=y*cols+x,d=frame.depth[i];if(!Number.isFinite(d))continue;
+      let strength=0;
+      for(const[dx,dy]of dirs){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=cols||ny>=rows){strength=Math.max(strength,.8);continue}const j=ny*cols+nx,nd=frame.depth[j];if(!Number.isFinite(nd)){strength=1;continue}
+        const relativeDepth=Math.abs(d-nd)/Math.max(.08,Math.min(d,nd)),depthTerm=clamp(relativeDepth*7.5);
+        const normalDot=clamp(frame.normalX[i]*frame.normalX[j]+frame.normalY[i]*frame.normalY[j]+frame.normalZ[i]*frame.normalZ[j],-1,1),normalTerm=clamp((1-normalDot)*1.6);
+        const materialTerm=frame.material[i]!==frame.material[j]?0.36:0,kindTerm=frame.kind[i]!==frame.kind[j]?0.18:0;
+        strength=Math.max(strength,depthTerm,normalTerm,materialTerm,kindTerm)
+      }
+      frame.edge[i]=clamp(strength)
+    }
+    return frame
+  }
+  function renderScene({world,generation,view,scene=null,columns,rows,viewportWidth,viewportHeight}){const frame=createFrame(Math.max(20,Math.floor(columns)),Math.max(12,Math.floor(rows))),camera=cameraForView(view,world,viewportWidth,viewportHeight);frame.camera=camera;if(world.isBlank)return finalizeFrame(frame);renderTerrain(frame,world,generation,view,camera,scene);renderBlocks(frame,world,generation,view,camera,scene);renderStructures(frame,world,generation,view,camera,scene);renderAgents(frame,world,generation,view,camera,scene);return finalizeFrame(frame);}
+
+  function rayBoxInterval(origin,direction,min,max){let tMin=0,tMax=Infinity;for(let axis=0;axis<3;axis++){if(Math.abs(direction[axis])<EPSILON){if(origin[axis]<min[axis]||origin[axis]>max[axis])return null;continue}let t1=(min[axis]-origin[axis])/direction[axis],t2=(max[axis]-origin[axis])/direction[axis];if(t1>t2)[t1,t2]=[t2,t1];tMin=Math.max(tMin,t1);tMax=Math.min(tMax,t2);if(tMin>tMax)return null;}return[tMin,tMax];}
+  function raycastTerrain({world,generation,view,scene=null,px,py,viewportWidth,viewportHeight}){
+    if(world.isBlank)return null;const camera=cameraForView(view,world,viewportWidth,viewportHeight),ray=rayFromScreen(px,py,viewportWidth,viewportHeight,camera),half=(world.n-1)/2,vertical=worldVerticalScale(world,scene),interval=rayBoxInterval(ray.origin,ray.direction,[-half,-vertical*1.4,-half],[half,vertical*1.4,half]);if(!interval)return null;
+    const start=Math.max(camera.near,interval[0]),end=Math.min(camera.far,interval[1]);if(end<=start)return null;const step=Math.max(.18,world.n/320);let previous=null;
+    const sample=t=>{const point=add(ray.origin,scale(ray.direction,t)),terrain=sampleTerrainWorld(world,generation,point[0],point[2],scene);return terrain?{t,point,terrain,delta:point[1]-terrain.y}:null};
+    for(let t=start;t<=end+step;t+=step){const current=sample(Math.min(t,end));if(!current){previous=null;continue}if(previous&&((previous.delta>=0&&current.delta<=0)||(previous.delta<=0&&current.delta>=0))){let lo=previous,hi=current;for(let i=0;i<14;i++){const mid=sample((lo.t+hi.t)*.5);if(!mid)break;if((lo.delta>=0&&mid.delta>=0)||(lo.delta<=0&&mid.delta<=0))lo=mid;else hi=mid}const hit=Math.abs(lo.delta)<Math.abs(hi.delta)?lo:hi,gx=clamp(hit.terrain.gx,0,world.n-1),gz=clamp(hit.terrain.gz,0,world.n-1);return{cellX:Math.round(gx),cellY:Math.round(gz),gridX:gx,gridY:gz,worldPoint:[hit.point[0],hit.terrain.y,hit.point[2]],distance:hit.t,camera,ray};}previous=current;if(t>=end)break;}return null;
+  }
+  function projectGridPoint({world,generation,view,scene=null,gx,gz,height,viewportWidth,viewportHeight}){const camera=cameraForView(view,world,viewportWidth,viewportHeight),point=gridToWorld(world,generation,gx,gz,height??terrainHeightAtGrid(world,generation,gx,gz),scene),projected=projectPoint(point,camera,viewportWidth,viewportHeight);return projected?{...projected,point,camera}:null;}
+  function orbitPan(view,world,dx,dy,viewportHeight){const camera=cameraForView(view,world,1,1),worldPerPixel=camera.distance/Math.max(120,viewportHeight)*1.15,delta=add(scale(camera.basis.right,-dx*worldPerPixel),scale(camera.basis.up,dy*worldPerPixel));view.targetX=(Number(view.targetX)||0)+delta[0];view.targetY=(Number(view.targetY)||0)+delta[1];view.targetZ=(Number(view.targetZ)||0)+delta[2];}
+  function flyPan(view,world,dx,dy,viewportHeight){const camera=cameraForView(view,world,1,1),worldPerPixel=defaultOrbitDistance(world)/Math.max(160,viewportHeight)*.55,delta=add(scale(camera.basis.right,-dx*worldPerPixel),scale(camera.basis.up,dy*worldPerPixel));view.positionX=camera.position[0]+delta[0];view.positionY=camera.position[1]+delta[1];view.positionZ=camera.position[2]+delta[2];}
+  function moveFreeCamera(view,world,forwardAmount,rightAmount,upAmount){const camera=cameraForView(view,world,1,1),distance=Math.max(.05,Number(view.moveSpeed)||1),delta=add(add(scale(camera.basis.forward,forwardAmount*distance),scale(camera.basis.right,rightAmount*distance)),scale([0,1,0],upAmount*distance));view.positionX=camera.position[0]+delta[0];view.positionY=camera.position[1]+delta[1];view.positionZ=camera.position[2]+delta[2];}
+  function switchCameraMode(view,world,mode){const current=cameraForView(view,world,1,1);if(mode==='fly'){view.positionX=current.position[0];view.positionY=current.position[1];view.positionZ=current.position[2];view.cameraMode='fly';}else{const distance=defaultOrbitDistance(world)/clamp(Number(view.zoom)||1,.08,12),target=add(current.position,scale(current.basis.forward,distance));view.targetX=target[0];view.targetY=target[1];view.targetZ=target[2];view.cameraMode='orbit';}}
+  function lookAt(view,world,point){const camera=cameraForView(view,world,1,1),d=normalize(sub(point,camera.position));view.pitch=Math.asin(clamp(d[1],-1,1));view.yaw=Math.atan2(d[0],-d[2]);if(view.cameraMode!=='fly'){view.targetX=point[0];view.targetY=point[1];view.targetZ=point[2];}}
+
+  window.GlyphscapeSceneCore={VERSION:'1.2.1',MATERIAL,KIND,SceneRenderer:{renderScene,raycastTerrain,projectGridPoint,cameraForView,gridToWorld,worldToGrid,terrainHeightAtGrid,gridHeightToWorld,worldVerticalScale,defaultOrbitDistance,orbitPan,flyPan,moveFreeCamera,switchCameraMode,lookAt},math:{add,sub,scale,dot,cross,length,normalize,orientationBasis,projectPoint,rayFromScreen}};
+})();
+</script><script>/* GLYPHSCAPE ASCII Vision v1.2.1
+ * Converts Scene Core depth, luminance, material, normal, and world-cell
+ * buffers into one reusable character frame for the canvas and exports.
+ */
+'use strict';
+(() => {
+  const VERSION='1.2.1';
+  const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
+  const lerp=(a,b,t)=>a+(b-a)*t;
+
+  const GLYPH_RAMPS=Object.freeze({
+    classic:' .,:;irsXA253hMHGS#9B&@',
+    dense:' ·.:,;i1tfLCG08@█',
+    minimal:' .-+=#@',
+    technical:' ._-=+xX#█',
+    soft:'  ·˙,:;+=xX#',
+    organic:' .,:;vYwW♣▓',
+    blocks:' ░▒▓█'
+  });
+
+  const PALETTES=Object.freeze({
+    natural:null,
+    amber:{terrain:'#e7a83e',water:'#ffd15c',vegetation:'#d9982e',structure:'#fff1bf',agent:'#fff7d6',fire:'#ff6648',weather:'#ffd982',accent:'#f4c95d'},
+    green:{terrain:'#70d47d',water:'#9effb1',vegetation:'#48b85b',structure:'#c8ffd0',agent:'#e8ffeb',fire:'#d7ff55',weather:'#a0f3a8',accent:'#a9e66e'},
+    mono:{terrain:'#d7ddd8',water:'#eef2ef',vegetation:'#c3cbc5',structure:'#ffffff',agent:'#ffffff',fire:'#ffffff',weather:'#dae0db',accent:'#ffffff'},
+    ice:{terrain:'#78a7d2',water:'#66c8e7',vegetation:'#87b9b3',structure:'#d9f6ff',agent:'#ffffff',fire:'#ff6a4c',weather:'#b8e9ff',accent:'#ffad66'},
+    accessible:{terrain:'#c7b36b',water:'#56b4e9',vegetation:'#009e73',structure:'#f0e442',agent:'#ffffff',fire:'#d55e00',weather:'#cc79a7',accent:'#e69f00'}
+  });
+
+  const RENDER_MODES=Object.freeze(['shaded','semantic','hybrid']);
+  const COLOR_MODES=Object.freeze(['material','monochrome','two-tone','depth']);
+  const OUTLINE_GLYPHS=Object.freeze({horizontal:'─',vertical:'│',diagDown:'╲',diagUp:'╱'});
+
+  function hexToRgb(value){
+    const text=String(value||'').trim();
+    const hex=/^#([0-9a-f]{6})$/i.exec(text);
+    if(hex){const n=parseInt(hex[1],16);return[(n>>16)&255,(n>>8)&255,n&255]}
+    const rgb=/^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/i.exec(text);
+    if(rgb)return[Number(rgb[1]),Number(rgb[2]),Number(rgb[3])];
+    return[220,232,221];
+  }
+  function rgbToCss(rgb){return`rgb(${Math.round(clamp(rgb[0],0,255))},${Math.round(clamp(rgb[1],0,255))},${Math.round(clamp(rgb[2],0,255))})`}
+  function mixColors(a,b,t){const aa=hexToRgb(a),bb=hexToRgb(b),q=clamp(Number(t)||0);return rgbToCss([lerp(aa[0],bb[0],q),lerp(aa[1],bb[1],q),lerp(aa[2],bb[2],q)])}
+  function shadeColor(value,factor){const rgb=hexToRgb(value),f=Math.max(0,Number(factor)||0);return rgbToCss(rgb.map(v=>v*f))}
+  function viewColor(view,key,fallback){return String(view?.[key]||view?.[`${key}Color`]||fallback)}
+
+  function luminanceCurve(raw,view){
+    let value=clamp(Number(raw)||0);
+    const exposure=clamp(Number(view.exposure)||0,-2,2);
+    value*=2**exposure;
+    value=(value-.5)*clamp(Number(view.contrast)||1,.25,2.5)+.5;
+    return clamp(Math.pow(clamp(value),1/clamp(Number(view.gamma)||1,.35,2.5)));
+  }
+  function frameCellIndex(frame,index,world){
+    const x=clamp(Number(frame.cellX[index])||0,0,world.n-1),y=clamp(Number(frame.cellY[index])||0,0,world.n-1);
+    return Math.round(y)*world.n+Math.round(x);
+  }
+  function depthRange(frame){
+    let min=Infinity,max=-Infinity;
+    for(let i=0;i<frame.depth.length;i++)if(Number.isFinite(frame.depth[i])){min=Math.min(min,frame.depth[i]);max=Math.max(max,frame.depth[i])}
+    if(!Number.isFinite(min))return{min:0,max:1,span:1};
+    return{min,max,span:Math.max(.0001,max-min)};
+  }
+  function neighborIndex(frame,x,y){return x<0||y<0||x>=frame.cols||y>=frame.rows?-1:y*frame.cols+x}
+  function edgeEvidence(frame){
+    const len=frame.depth.length,edge=new Float32Array(len),angle=new Float32Array(len),range=depthRange(frame),depthNorm=new Float32Array(len);
+    for(let y=0;y<frame.rows;y++)for(let x=0;x<frame.cols;x++){
+      const i=y*frame.cols+x,d=frame.depth[i];
+      if(!Number.isFinite(d))continue;
+      depthNorm[i]=clamp((d-range.min)/range.span);
+      let silhouette=0,depthJump=0,normalJump=0,materialJump=0,dx=0,dy=0;
+      for(const[nx,ny,sx,sy]of[[x-1,y,-1,0],[x+1,y,1,0],[x,y-1,0,-1],[x,y+1,0,1]]){
+        const ni=neighborIndex(frame,nx,ny);
+        if(ni<0||!Number.isFinite(frame.depth[ni])){silhouette=1;dx+=sx;dy+=sy;continue}
+        const rel=Math.abs(frame.depth[ni]-d)/Math.max(.2,Math.min(frame.depth[ni],d));
+        if(rel>depthJump){depthJump=rel;dx=sx*(frame.depth[ni]-d);dy=sy*(frame.depth[ni]-d)}
+        const dot=frame.normalX[i]*frame.normalX[ni]+frame.normalY[i]*frame.normalY[ni]+frame.normalZ[i]*frame.normalZ[ni];
+        normalJump=Math.max(normalJump,1-clamp(dot,-1,1));
+        if(frame.material[ni]!==frame.material[i])materialJump=1;
+      }
+      edge[i]=clamp(Math.max(Number(frame.edge?.[i])||0,silhouette*.98,depthJump*3.35,normalJump*.82,materialJump*.82));
+      angle[i]=Math.atan2(dy,dx);
+    }
+    return{edge,angle,depthNorm,range};
+  }
+  function outlineGlyph(angle){
+    const a=((angle%(Math.PI*2))+Math.PI*2)%(Math.PI*2),sector=Math.round(a/(Math.PI/4))%8;
+    if(sector===0||sector===4)return OUTLINE_GLYPHS.vertical;
+    if(sector===2||sector===6)return OUTLINE_GLYPHS.horizontal;
+    if(sector===1||sector===5)return OUTLINE_GLYPHS.diagDown;
+    return OUTLINE_GLYPHS.diagUp;
+  }
+  function rampGlyph(ramp,value){
+    const chars=[...String(ramp||GLYPH_RAMPS.classic)];
+    if(!chars.length)return'.';
+    const first=chars[0]===' '?1:0,index=Math.max(first,Math.min(chars.length-1,Math.round(clamp(value)*(chars.length-1))));
+    return chars[index]||'.';
+  }
+  function semanticGlyph(frame,index,world,view,materials,biomes){
+    const material=frame.material[index],cell=frameCellIndex(frame,index,world),biome=world.biome[cell]||0;
+    if(material===materials.WATER)return world.weather==='Wind'?'≋':'≈';
+    if(material===materials.BLOCK)return'▓';
+    if(material===materials.STRUCTURE){const object=world.structures[frame.objectIndex[index]];return object?.type==='tower'?'‡':'⌂'}
+    if(material===materials.AGENT)return'@';
+    if(material!==materials.TERRAIN)return' ';
+    if(world.fire[cell]>.08)return world.fire[cell]>.55?'✦':'*';
+    if(view.layers?.vegetation&&world.vegetation[cell]>.72&&frame.normalY[index]>.15)return biome===5?'♣':'♠';
+    return biomes[biome]?.glyph||'.';
+  }
+  function hybridGlyph(frame,index,world,view,materials,biomes,luminance,edge,angle){
+    const material=frame.material[index],cell=frameCellIndex(frame,index,world),biome=world.biome[cell]||0;
+    if(world.fire[cell]>.08)return world.fire[cell]>.55?'✦':'*';
+    if(material===materials.AGENT)return luminance>.52?'@':'a';
+    if(material===materials.STRUCTURE){const object=world.structures[frame.objectIndex[index]];return object?.type==='tower'?(luminance>.48?'‡':'†'):(luminance>.5?'⌂':'▱')}
+    if(material===materials.BLOCK)return edge>.72?outlineGlyph(angle):(luminance>.52?'▓':'▒');
+    if(material===materials.WATER)return edge>.78?'~':world.weather==='Wind'?'≋':'≈';
+    if(view.layers?.vegetation&&world.vegetation[cell]>.72&&frame.normalY[index]>.15)return biome===5?(luminance>.48?'♣':'♧'):(luminance>.48?'♠':'♤');
+    if(edge>.82)return outlineGlyph(angle);
+    const slope=1-clamp(frame.normalY[index],-1,1),relief=clamp(luminance*.82+slope*.28+world.height[cell]*.08);
+    return rampGlyph(GLYPH_RAMPS[view.glyphSet]||GLYPH_RAMPS.classic,relief);
+  }
+  function shadedGlyph(frame,index,view,luminance,edge,angle){
+    if(edge>.76)return outlineGlyph(angle);
+    const facing=.84+Math.abs(frame.normalY[index])*.16,relief=clamp(luminance*facing+edge*.19);
+    return rampGlyph(GLYPH_RAMPS[view.glyphSet]||GLYPH_RAMPS.classic,relief);
+  }
+  function naturalColor(frame,index,world,view,materials,biomes){
+    const material=frame.material[index],cell=frameCellIndex(frame,index,world),palette=PALETTES[view.palette];
+    if(palette){
+      if(material===materials.WATER)return palette.water;
+      if(material===materials.BLOCK||material===materials.STRUCTURE)return palette.structure;
+      if(material===materials.AGENT)return palette.agent;
+      if(world.fire[cell]>.08)return palette.fire;
+      if(view.layers?.vegetation&&world.vegetation[cell]>.72)return palette.vegetation;
+      return palette.terrain;
+    }
+    if(material===materials.WATER)return'#4d9ad4';
+    if(material===materials.BLOCK)return'#b8a17a';
+    if(material===materials.STRUCTURE)return'#f4e5a0';
+    if(material===materials.AGENT)return'#fff4d8';
+    if(world.fire[cell]>.08)return'#ff6b4a';
+    if(view.layers?.vegetation&&world.vegetation[cell]>.72)return'#4e9f58';
+    return biomes[world.biome[cell]]?.color||'#b9c3b9';
+  }
+  function colorForCell(frame,index,world,view,materials,biomes,luminance,depthNorm){
+    const foreground=viewColor(view,'foreground','#dce8dd'),background=viewColor(view,'background','#060807');
+    const rawMode=String(view.colorMode||'material'),mode=rawMode==='mono'?'monochrome':rawMode==='twoTone'?'two-tone':rawMode;
+    const fade=1-clamp(Number(view.depthFade)||0,0,.9)*depthNorm;
+    if(mode==='monochrome')return mixColors(background,foreground,clamp((.30+luminance*.70)*fade));
+    if(mode==='two-tone'){
+      const accent=PALETTES[view.palette]?.accent||'#a9e66e',base=luminance>.52?foreground:accent;
+      return shadeColor(base,(.48+luminance*.64)*fade);
+    }
+    if(mode==='depth'){
+      const near=PALETTES[view.palette]?.accent||foreground,far=PALETTES[view.palette]?.water||'#4d9ad4';
+      return shadeColor(mixColors(near,far,depthNorm),(.52+luminance*.55)*fade);
+    }
+    const base=naturalColor(frame,index,world,view,materials,biomes),semantic=view.renderMode==='semantic';
+    return shadeColor(base,((semantic ? .82 : .34)+(semantic ? luminance*.22 : luminance*.88))*fade);
+  }
+  function hashString(str){let h=2166136261>>>0;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+  function mulberry32(seed){return function(){let t=seed+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
+  function applyWeather(chars,colors,frame,world,view,generation,phase){
+    if(!view.layers?.weather||!['Rain','Snow','Wind','Fog'].includes(world.weather))return 0;
+    const rng=mulberry32(hashString(`${generation?.seed||''}|${world.weather}|${Math.floor(world.day*4)}|${phase}`));
+    const weatherColor=PALETTES[view.palette]?.weather||viewColor(view,'foreground','#dce8dd');
+    if(world.weather==='Fog'){
+      let changed=0;
+      for(let i=0;i<chars.length;i++)if(chars[i]!==' '&&rng()<.18){colors[i]=mixColors(colors[i],weatherColor,.32);changed++}
+      return changed;
+    }
+    const count=Math.max(6,Math.floor(frame.cols*frame.rows/360));
+    for(let k=0;k<count;k++){
+      const x=Math.floor(rng()*frame.cols),y=Math.floor(rng()*frame.rows),i=y*frame.cols+x;
+      chars[i]=world.weather==='Rain'?(phase%2?'│':'╱'):world.weather==='Snow'?(rng()>.5?'*':'·'):(rng()>.5?'~':'≋');
+      colors[i]=weatherColor;
+    }
+    return count;
+  }
+
+  function compose({frame,world,view,materials,biomes,generation=null,weatherPhase=0}){
+    if(!frame||!world||!materials||!biomes)throw new Error('ASCII Vision requires a scene frame, world, material map, and biome map.');
+    const evidence=edgeEvidence(frame),len=frame.depth.length,chars=new Array(len).fill(' '),colors=new Array(len).fill(viewColor(view,'foreground','#dce8dd'));
+    const mode=RENDER_MODES.includes(view.renderMode)?view.renderMode:'hybrid',edgeStrength=clamp(Number(view.edgeStrength)||0,0,1.5);
+    let visible=0;
+    for(let i=0;i<len;i++){
+      if(!Number.isFinite(frame.depth[i]))continue;
+      const lum=luminanceCurve(frame.luminance[i],view),edge=clamp(evidence.edge[i]*edgeStrength*1.65),angle=evidence.angle[i];
+      const glyph=mode==='shaded'?shadedGlyph(frame,i,view,lum,edge,angle):mode==='semantic'?semanticGlyph(frame,i,world,view,materials,biomes):hybridGlyph(frame,i,world,view,materials,biomes,lum,edge,angle);
+      chars[i]=glyph||' ';
+      colors[i]=colorForCell(frame,i,world,view,materials,biomes,lum,evidence.depthNorm[i]);
+      if(chars[i]!==' ')visible++;
+    }
+    const weatherCells=applyWeather(chars,colors,frame,world,view,generation,weatherPhase);
+    visible=chars.reduce((total,glyph)=>total+(glyph!==' '?1:0),0);
+    const lines=[];
+    for(let row=0;row<frame.rows;row++)lines.push(chars.slice(row*frame.cols,(row+1)*frame.cols).join(''));
+    return{
+      cols:frame.cols,rows:frame.rows,chars,glyphs:chars,colors,text:lines.join('\n'),edge:evidence.edge,depthNorm:evidence.depthNorm,
+      visible,weatherCells,mode,background:viewColor(view,'background','#060807'),depthRange:evidence.range
+    };
+  }
+
+  function resolutionForViewport(view,width,height,{interacting=false,fps=60,renderDuration=0,captureColumns=null}={}){
+    const automatic=view.autoResolution!==false,characterAspect=clamp(Number(view.characterAspect)||.58,.42,.86);
+    let base;
+    if(Number(captureColumns)>0)base=clamp(Math.round(Number(captureColumns)),48,240);
+    else if(automatic)base=clamp(Math.floor(width/8.2*(.72+clamp(Number(view.detail)||1,.1,1)*.28)),48,176);
+    else base=clamp(Math.round(Number(view.outputColumns)||108),48,200);
+    let scale=1,reason=Number(captureColumns)>0?'capture':'full';
+    if(!(Number(captureColumns)>0)&&view.adaptiveResolution!==false&&interacting){scale=.68;reason='motion'}
+    else if(!(Number(captureColumns)>0)&&view.adaptiveResolution!==false&&renderDuration>40){scale=.80;reason='frame budget'}
+    else if(!(Number(captureColumns)>0)&&view.adaptiveResolution!==false&&renderDuration>28){scale=.90;reason='frame budget'}
+    const columns=Math.max(36,Math.round(base*scale)),rows=clamp(Math.round(columns*characterAspect*height/Math.max(1,width)),18,Number(captureColumns)>0?160:112);
+    return{columns,rows,scale,reason,baseColumns:base,automatic};
+  }
+
+
+  function draw(ctx,ascii,rect,{fontFamily='monospace',fontWeight=700,characterAspect=.58}={}){
+    const cellW=rect.width/ascii.cols,cellH=rect.height/ascii.rows,fontSize=clamp(Math.min(cellH*.92,cellW/characterAspect*.92),5,32);
+    ctx.save();ctx.fillStyle=ascii.background;ctx.fillRect(0,0,rect.width,rect.height);ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`${fontWeight} ${fontSize}px ${fontFamily}`;ctx.globalAlpha=1;
+    for(let row=0;row<ascii.rows;row++)for(let col=0;col<ascii.cols;col++){
+      const i=row*ascii.cols+col,glyph=ascii.chars[i];if(!glyph||glyph===' ')continue;
+      ctx.fillStyle=ascii.colors[i];ctx.fillText(glyph,(col+.5)*cellW,(row+.5)*cellH,cellW*.96);
+    }
+    ctx.restore();return{fontSize,cellW,cellH};
+  }
+
+
+  const api={VERSION,GLYPH_RAMPS,PALETTES,RENDER_MODES,COLOR_MODES,compose,resolutionForViewport,draw,edgeEvidence,mixColors,shadeColor};
+  window.GlyphscapeAsciiVision=api;
+  window.GlyphscapeAsciiRenderer=api;
+})();
+</script><script>'use strict';
+(() => {
+const VERSION='1.2.1';
+const SCHEMA_VERSION=4;
+const ACTIVE_KEY='glyphscape.active.v4';
+const LEGACY_ACTIVE_KEYS=['glyphscape.active.v3','glyphscape.active.v2','glyphscape.active.v1'];
+const SETTINGS_KEY='glyphscape.settings.v1';
+const DB_NAME='glyphscape-projects-v1';
+const STORE_NAME='projects';
+const MAX_IMPORT_BYTES=32*1024*1024;
+const Scene=window.GlyphscapeSceneCore?.SceneRenderer;
+const SceneMaterial=window.GlyphscapeSceneCore?.MATERIAL;
+const Ascii=window.GlyphscapeAsciiVision||window.GlyphscapeAsciiRenderer;
+if(!Scene||!SceneMaterial)throw new Error('GLYPHSCAPE Scene Core did not load.');
+if(!Ascii)throw new Error('GLYPHSCAPE ASCII Vision did not load.');
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const smooth=t=>t*t*(3-2*t);
+const mod=(n,m)=>((n%m)+m)%m;
+const nowISO=()=>new Date().toISOString();
+const escapeHtml=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>`${Date.now().toString(36)}-${Math.random().toString(36).slice(2,9)}`;
+function hashString(str){let h=2166136261>>>0;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+function mulberry32(seed){return function(){let t=seed+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
+function hash2(x,y,seed){let h=Math.imul(x|0,374761393)+Math.imul(y|0,668265263)+Math.imul(seed|0,1442695041);h=(h^(h>>>13));h=Math.imul(h,1274126177);return((h^(h>>>16))>>>0)/4294967295}
+function valueNoise(x,y,seed){const x0=Math.floor(x),y0=Math.floor(y),tx=smooth(x-x0),ty=smooth(y-y0);const a=hash2(x0,y0,seed),b=hash2(x0+1,y0,seed),c=hash2(x0,y0+1,seed),d=hash2(x0+1,y0+1,seed);return lerp(lerp(a,b,tx),lerp(c,d,tx),ty)}
+function fbm(x,y,seed,octaves=5){let sum=0,amp=.55,freq=1,norm=0;for(let o=0;o<octaves;o++){sum+=valueNoise(x*freq,y*freq,seed+o*1013)*amp;norm+=amp;amp*=.5;freq*=2.03}return sum/norm}
+function ridged(x,y,seed){return 1-Math.abs(fbm(x,y,seed,5)*2-1)}
+function downloadBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1200)}
+function safeName(name){return(String(name||'glyphscape-world').trim().replace(/[^a-z0-9._-]+/gi,'-').replace(/^-+|-+$/g,'')||'glyphscape-world').slice(0,80)}
+function formatDate(iso){try{return new Intl.DateTimeFormat(undefined,{dateStyle:'medium',timeStyle:'short'}).format(new Date(iso))}catch{return iso}}
+function bytesToBase64(typed){const bytes=new Uint8Array(typed.buffer,typed.byteOffset,typed.byteLength);let s='';const chunk=0x8000;for(let i=0;i<bytes.length;i+=chunk)s+=String.fromCharCode(...bytes.subarray(i,i+chunk));return btoa(s)}
+function base64ToTyped(str,Ctor){const bin=atob(str),bytes=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);return new Ctor(bytes.buffer)}
+
+const BIOMES=[
+  {name:'Ocean',glyph:'≈',color:'#4d9ad4'},
+  {name:'Beach',glyph:'.',color:'#d9c78e'},
+  {name:'Desert',glyph:':',color:'#c99152'},
+  {name:'Grassland',glyph:',',color:'#88b45f'},
+  {name:'Forest',glyph:'♠',color:'#4a8a4c'},
+  {name:'Rainforest',glyph:'♣',color:'#2d7651'},
+  {name:'Tundra',glyph:'·',color:'#aeb7a2'},
+  {name:'Alpine',glyph:'▲',color:'#9b9f98'},
+  {name:'Marsh',glyph:';',color:'#5a9c82'},
+  {name:'Scorched',glyph:'x',color:'#87594b'},
+  {name:'Snow',glyph:'*',color:'#e6f2f6'}
+];
+const GLYPH_RAMPS={classic:' .,:;irsXA253hMHGS#9B&@',dense:' ·.:,;i1tfLCG08@',minimal:' .-+=#@',technical:' ._-=+xX#█',soft:'  ·.:-=+*#',organic:' .,:;!lIYVNM',blocks:' ░▒▓█'};
+const PALETTES={
+  natural:null,
+  amber:{terrain:'#e7a83e',water:'#ffd15c',vegetation:'#d9982e',structure:'#fff1bf',agent:'#fff7d6',fire:'#ff6648',weather:'#ffd982'},
+  green:{terrain:'#70d47d',water:'#9effb1',vegetation:'#48b85b',structure:'#c8ffd0',agent:'#e8ffeb',fire:'#d7ff55',weather:'#a0f3a8'},
+  mono:{terrain:'#d7ddd8',water:'#eef2ef',vegetation:'#c3cbc5',structure:'#ffffff',agent:'#ffffff',fire:'#ffffff',weather:'#dae0db'},
+  ice:{terrain:'#78a7d2',water:'#66c8e7',vegetation:'#87b9b3',structure:'#d9f6ff',agent:'#ffffff',fire:'#ff6a4c',weather:'#b8e9ff'},
+  accessible:{terrain:'#c7b36b',water:'#56b4e9',vegetation:'#009e73',structure:'#f0e442',agent:'#ffffff',fire:'#d55e00',weather:'#cc79a7'}
+};
+const SEASONS=['Spring','Summer','Autumn','Winter'];
+const WEATHER=['Clear','Cloudy','Rain','Wind','Fog','Snow'];
+
+function blankWorld(n=64){const len=n*n;return{n,height:new Float32Array(len),moisture:new Float32Array(len),temperature:new Float32Array(len),water:new Float32Array(len),vegetation:new Float32Array(len),fire:new Float32Array(len),biome:new Uint8Array(len),blocks:[],structures:[],agents:[],day:0,weather:'Clear',weatherDays:4,isBlank:true}}
+const state={
+  project:{id:uid(),name:'Untitled World',createdAt:nowISO(),updatedAt:nowISO(),schemaVersion:SCHEMA_VERSION,isSample:false},
+  generation:{seed:'green-shoe',preset:'highlands',resolution:64,seaLevel:.34,roughness:.58,climate:'temperate',settlements:4},
+  world:blankWorld(64),
+  scene:{model:'heightfield-sparse-v1',renderer:'software-ascii-vision-v2',verticalScaleFactor:.24},
+  view:{yaw:-38*Math.PI/180,pitch:-28*Math.PI/180,roll:0,zoom:1,cameraMode:'orbit',cameraPreset:'orbit',targetX:0,targetY:0,targetZ:0,positionX:0,positionY:0,positionZ:0,fov:48,near:.15,far:384,moveSpeed:1,projection:'perspective',renderMode:'hybrid',glyphSet:'classic',palette:'natural',autoResolution:true,outputColumns:108,captureColumns:160,adaptiveResolution:true,contrast:1.1,exposure:0,edgeStrength:.55,depthFade:.22,colorMode:'material',foreground:'#dce8dd',background:'#060807',detail:1,layers:{terrain:true,water:true,vegetation:true,structures:true,agents:true,weather:true}},
+  tool:{mode:'orbit',sculptAction:'raise',radius:3,strength:.4,paintLayer:'moisture',paintValue:.7,paintRadius:3},
+  sim:{playing:false,speed:1,last:0,accumulator:0,stepMs:550},
+  selection:null,history:[],future:[],eventLog:[],projected:[],sceneFrame:null,asciiFrame:null,lastAscii:'',lastRenderAt:0,lastRenderDuration:0,fps:0,needsRender:true,motionUntil:0,motionTimer:null,adaptiveScale:1,adaptiveReason:'full',renderCostEma:0,recoveryRenderTimer:null,lastOrbitView:null,characterAspect:.58,strokeChanged:false,strokeSnapshot:null,
+  ui:{leftOpen:true,rightOpen:true,theme:'dark'},
+  db:null,storageMode:'session',localStorageAvailable:false,sessionStorage:new Map(),sessionProjects:new Map(),saveTimer:null,saveState:'ready',persistenceWarningShown:false,lastStorageError:null,
+  simulationBaseline:null,baselineEventLog:[],recoveryCandidate:null,recoveryHold:false,safetyResolver:null
+};
+
+function toast(title,message='',kind='info',duration=3600){const region=$('#toastRegion');while(region.children.length>=3)region.firstElementChild?.remove();const el=document.createElement('div');el.className=`toast ${kind==='error'?'error':kind==='warn'?'warn':''}`;el.innerHTML=`<b>${escapeHtml(title)}</b>${message?`<span>${escapeHtml(message)}</span>`:''}`;region.appendChild(el);setTimeout(()=>el.remove(),duration)}
+function setStatus(message){$('#statusMessage').textContent=message}
+function logEvent(message,kind=''){state.eventLog.unshift({at:nowISO(),day:Math.floor(state.world.day),message,kind});state.eventLog=state.eventLog.slice(0,80);renderLog()}
+function renderLog(){const el=$('#eventLog');if(!state.eventLog.length){el.innerHTML='<div class="log-entry">No events recorded.</div>';return}el.innerHTML=state.eventLog.map(e=>`<div class="log-entry ${e.kind||''}"><time>D${e.day}</time>${escapeHtml(e.message)}</div>`).join('')}
+function setAutosave(status,text){state.saveState=status;const dot=$('#autosaveDot'),label=$('#autosaveText');dot.className=`autosave-dot ${status}`;label.textContent=text||({unsaved:'Unsaved',saving:'Saving…',saved:'Saved locally',session:'Session only',recovery:'Recovery needed',error:'Save failed',ready:'Ready'}[status]||status)}
+function storageErrorText(error){const name=error?.name||'StorageError';if(name==='QuotaExceededError')return'Browser storage quota was exceeded.';if(name==='SecurityError')return'Browser privacy settings blocked persistent storage.';if(name==='InvalidStateError')return'Browser storage is not currently available.';return error?.message||String(error||'Unknown storage failure.')}
+function rememberStorageError(error,source){state.lastStorageError={source,name:error?.name||'StorageError',message:storageErrorText(error),at:nowISO()};return state.lastStorageError}
+function detectLocalStorage(){try{const key='__glyphscape_storage_test__';window.localStorage.setItem(key,'1');window.localStorage.removeItem(key);return true}catch(error){rememberStorageError(error,'local storage detection');return false}}
+function storageGet(key){if(state.localStorageAvailable){try{return window.localStorage.getItem(key)}catch(error){rememberStorageError(error,'local storage read');state.localStorageAvailable=false}}return state.sessionStorage.get(key)??null}
+function storageSet(key,value){state.sessionStorage.set(key,value);if(state.localStorageAvailable){try{window.localStorage.setItem(key,value);return true}catch(error){rememberStorageError(error,'local storage write');if(error?.name==='SecurityError')state.localStorageAvailable=false}}return false}
+function storageRemove(key){state.sessionStorage.delete(key);if(state.localStorageAvailable){try{window.localStorage.removeItem(key);return true}catch(error){rememberStorageError(error,'local storage remove');if(error?.name==='SecurityError')state.localStorageAvailable=false}}return false}
+function cloneRecord(record){try{return structuredClone(record)}catch{return JSON.parse(JSON.stringify(record))}}
+function warnSessionOnly(){if(state.persistenceWarningShown)return;state.persistenceWarningShown=true;const detail=state.lastStorageError?.message||'Persistent browser storage is unavailable.';toast('Session-only storage',`${detail} Work remains usable in this tab; export the project for a durable backup.`,'warn',8500)}
+
+async function openDB(){try{if(!window.indexedDB)return null;return await new Promise(resolve=>{let settled=false;const finish=value=>{if(settled)return;settled=true;clearTimeout(timer);resolve(value)};const timer=setTimeout(()=>{rememberStorageError(new DOMException('Indexed Database opening timed out.','TimeoutError'),'Indexed Database open');finish(null)},2200);let req;try{req=window.indexedDB.open(DB_NAME,1)}catch(error){rememberStorageError(error,'Indexed Database open');return finish(null)}req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(STORE_NAME))db.createObjectStore(STORE_NAME,{keyPath:'project.id'})};req.onsuccess=()=>{const db=req.result;db.onversionchange=()=>db.close();finish(db)};req.onerror=()=>{rememberStorageError(req.error,'Indexed Database open');finish(null)};req.onblocked=()=>{rememberStorageError(new DOMException('Indexed Database upgrade was blocked by another tab.','InvalidStateError'),'Indexed Database open');finish(null)}})}catch(error){rememberStorageError(error,'Indexed Database open');return null}}
+async function dbPut(record){state.sessionProjects.set(record.project.id,cloneRecord(record));if(!state.db)return false;return new Promise(resolve=>{try{const tx=state.db.transaction(STORE_NAME,'readwrite');tx.objectStore(STORE_NAME).put(record);tx.oncomplete=()=>resolve(true);tx.onerror=()=>{rememberStorageError(tx.error,'Indexed Database write');resolve(false)};tx.onabort=()=>{rememberStorageError(tx.error,'Indexed Database write');resolve(false)}}catch(error){rememberStorageError(error,'Indexed Database write');resolve(false)}})}
+async function dbGet(id){if(state.db){const persistent=await new Promise(resolve=>{try{const tx=state.db.transaction(STORE_NAME,'readonly'),r=tx.objectStore(STORE_NAME).get(id);r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>{rememberStorageError(r.error,'Indexed Database read');resolve(null)}}catch(error){rememberStorageError(error,'Indexed Database read');resolve(null)}});if(persistent)return persistent}return state.sessionProjects.get(id)||null}
+async function dbList(){let records=[];if(state.db)records=await new Promise(resolve=>{try{const tx=state.db.transaction(STORE_NAME,'readonly'),r=tx.objectStore(STORE_NAME).getAll();r.onsuccess=()=>resolve(r.result||[]);r.onerror=()=>{rememberStorageError(r.error,'Indexed Database list');resolve([])}}catch(error){rememberStorageError(error,'Indexed Database list');resolve([])}});const merged=new Map();for(const r of records){const id=r?.project?.id;if(id)merged.set(id,r)}for(const[id,r]of state.sessionProjects)merged.set(id,r);return[...merged.values()].sort((a,b)=>String(b?.project?.updatedAt||'').localeCompare(String(a?.project?.updatedAt||'')))}
+async function dbDelete(id){state.sessionProjects.delete(id);if(!state.db)return false;return new Promise(resolve=>{try{const tx=state.db.transaction(STORE_NAME,'readwrite');tx.objectStore(STORE_NAME).delete(id);tx.oncomplete=()=>resolve(true);tx.onerror=()=>{rememberStorageError(tx.error,'Indexed Database delete');resolve(false)};tx.onabort=()=>{rememberStorageError(tx.error,'Indexed Database delete');resolve(false)}}catch(error){rememberStorageError(error,'Indexed Database delete');resolve(false)}})}
+async function dbClear(){state.sessionProjects.clear();if(!state.db)return false;return new Promise(resolve=>{try{const tx=state.db.transaction(STORE_NAME,'readwrite');tx.objectStore(STORE_NAME).clear();tx.oncomplete=()=>resolve(true);tx.onerror=()=>{rememberStorageError(tx.error,'Indexed Database clear');resolve(false)};tx.onabort=()=>{rememberStorageError(tx.error,'Indexed Database clear');resolve(false)}}catch(error){rememberStorageError(error,'Indexed Database clear');resolve(false)}})}
+
+function isPlainObject(value){return!!value&&typeof value==='object'&&!Array.isArray(value)}
+function finiteNumber(value,fallback,min=-Infinity,max=Infinity){const n=Number(value);return Number.isFinite(n)?clamp(n,min,max):fallback}
+function safeString(value,fallback='',max=160){const s=typeof value==='string'?value:fallback;return s.slice(0,max)}
+function validISO(value,fallback=nowISO()){return typeof value==='string'&&Number.isFinite(Date.parse(value))?value:fallback}
+function strictBase64Bytes(value,expectedBytes,label){if(typeof value!=='string'||!value.length)throw new Error(`${label} is missing.`);const compact=value.replace(/\s+/g,'');if(compact.length>Math.ceil(expectedBytes/3)*4+8)throw new Error(`${label} is larger than expected.`);let bin;try{bin=atob(compact)}catch{throw new Error(`${label} is not valid Base64 data.`)}if(bin.length!==expectedBytes)throw new Error(`${label} has ${bin.length} bytes; expected ${expectedBytes}.`);const bytes=new Uint8Array(expectedBytes);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);return bytes}
+function strictTypedArray(value,Ctor,length,label){const bytes=strictBase64Bytes(value,length*Ctor.BYTES_PER_ELEMENT,label);return new Ctor(bytes.buffer)}
+function normalizeBlocks(items,n){
+  if(!Array.isArray(items))return[];
+  return items.slice(0,10000).filter(isPlainObject).map((x,index)=>({
+    id:safeString(x.id,`block-${index}`,100),x:finiteNumber(x.x,0,0,n-1),y:finiteNumber(x.y,0,0,n-1),
+    type:safeString(x.type,'block',40),name:safeString(x.name,`Block ${index+1}`,120),material:safeString(x.material,'stone',40),
+    rotation:finiteNumber(x.rotation,0,-Math.PI*100,Math.PI*100),scaleX:finiteNumber(x.scaleX,1,.1,24),scaleY:finiteNumber(x.scaleY,1,.05,24),scaleZ:finiteNumber(x.scaleZ,1,.1,24),
+    elevationOffset:finiteNumber(x.elevationOffset,0,-n,n),visible:x.visible!==false,locked:!!x.locked
+  }))
+}
+function normalizeStructures(items,n){
+  if(!Array.isArray(items))return[];
+  return items.slice(0,10000).filter(isPlainObject).map((x,index)=>({
+    id:safeString(x.id,`structure-${index}`,100),x:finiteNumber(x.x,0,0,n-1),y:finiteNumber(x.y,0,0,n-1),
+    type:safeString(x.type,'structure',40),name:safeString(x.name,`Structure ${index+1}`,120),
+    rotation:finiteNumber(x.rotation,0,-Math.PI*100,Math.PI*100),scale:finiteNumber(x.scale,1,.1,12),
+    elevationOffset:finiteNumber(x.elevationOffset,0,-n,n),visible:x.visible!==false,locked:!!x.locked
+  }))
+}
+function normalizeAgents(items,n){
+  if(!Array.isArray(items))return[];
+  return items.slice(0,10000).filter(isPlainObject).map((x,index)=>({
+    id:safeString(x.id,`agent-${index}`,100),x:finiteNumber(x.x,0,0,n-1),y:finiteNumber(x.y,0,0,n-1),
+    energy:finiteNumber(x.energy,.75,0,1),name:safeString(x.name,`Agent ${index+1}`,120),
+    heading:finiteNumber(x.heading,0,-Math.PI*100,Math.PI*100),visible:x.visible!==false,locked:!!x.locked
+  }))
+}
+function serializeWorld(world=state.world){
+  return{n:world.n,height:bytesToBase64(world.height),moisture:bytesToBase64(world.moisture),temperature:bytesToBase64(world.temperature),water:bytesToBase64(world.water),vegetation:bytesToBase64(world.vegetation),fire:bytesToBase64(world.fire),biome:bytesToBase64(world.biome),blocks:normalizeBlocks(world.blocks,world.n),structures:normalizeStructures(world.structures,world.n),agents:normalizeAgents(world.agents,world.n),day:world.day,weather:world.weather,weatherDays:world.weatherDays,isBlank:world.isBlank}
+}
+function deserializeWorld(data){if(!isPlainObject(data))throw new Error('World data is missing or invalid.');const n=Number(data.n);if(!Number.isInteger(n)||n<8||n>256)throw new Error('World resolution must be an integer from 8 through 256.');const len=n*n;return{n,height:strictTypedArray(data.height,Float32Array,len,'Height field'),moisture:strictTypedArray(data.moisture,Float32Array,len,'Moisture field'),temperature:strictTypedArray(data.temperature,Float32Array,len,'Temperature field'),water:strictTypedArray(data.water,Float32Array,len,'Water field'),vegetation:strictTypedArray(data.vegetation,Float32Array,len,'Vegetation field'),fire:strictTypedArray(data.fire,Float32Array,len,'Fire field'),biome:strictTypedArray(data.biome,Uint8Array,len,'Biome field'),blocks:normalizeBlocks(data.blocks,n),structures:normalizeStructures(data.structures,n),agents:normalizeAgents(data.agents,n),day:finiteNumber(data.day,0,0,1e9),weather:safeString(data.weather,'Clear',40),weatherDays:finiteNumber(data.weatherDays,4,0,1e6),isBlank:!!data.isBlank}}
+function normalizeEventLog(items){if(!Array.isArray(items))return[];return items.slice(0,500).filter(isPlainObject).map(e=>({at:validISO(e.at),day:finiteNumber(e.day,0,0,1e9),message:safeString(e.message,'Event',500),kind:safeString(e.kind,'',30)}))}
+function worldFingerprint(data){
+  const pieces=['glyphscape-world-v3',String(data.n),data.height,data.moisture,data.temperature,data.water,data.vegetation,data.fire,data.biome,JSON.stringify(data.blocks||[]),JSON.stringify(data.structures||[]),JSON.stringify(data.agents||[]),String(data.day),String(data.weather),String(data.weatherDays),String(!!data.isBlank)];
+  return hashString(pieces.join('|')).toString(16).padStart(8,'0')
+}
+function worldFingerprintV2(data){const pieces=['glyphscape-world-v2',String(data.n),data.height,data.moisture,data.temperature,data.water,data.vegetation,data.fire,data.biome,JSON.stringify(data.structures||[]),JSON.stringify(data.agents||[]),String(data.day),String(data.weather),String(data.weatherDays),String(!!data.isBlank)];return hashString(pieces.join('|')).toString(16).padStart(8,'0')}
+function migrateV1toV2(record){record.simulation={speed:1,stepMs:550,baselineWorld:cloneRecord(record.world),baselineEventLog:normalizeEventLog(record.eventLog)};record.schemaVersion=2;record.project={...(record.project||{}),schemaVersion:2};record.integrity={algorithm:'FNV-1A-32',worldHash:worldFingerprintV2(record.world)};return record}
+function migrateV2toV3(record){
+  const n=Number(record?.world?.n)||64,view=isPlainObject(record.view)?record.view:{};
+  if(record.integrity?.worldHash){const actual=worldFingerprintV2(record.world);if(actual!==record.integrity.worldHash)throw new Error(`Legacy project integrity check failed (${actual} does not match ${record.integrity.worldHash}).`)}
+  record.world={...(record.world||{}),blocks:normalizeBlocks(record?.world?.blocks,n),structures:normalizeStructures(record?.world?.structures,n),agents:normalizeAgents(record?.world?.agents,n)};
+  record.view={...view,yaw:-finiteNumber(view.yaw,-38*Math.PI/180,-Math.PI*100,Math.PI*100),pitch:-finiteNumber(view.pitch,46*Math.PI/180,-Math.PI*100,Math.PI*100),roll:-finiteNumber(view.roll,0,-Math.PI*100,Math.PI*100),cameraMode:'orbit',cameraPreset:'orbit',targetX:0,targetY:0,targetZ:0,positionX:0,positionY:0,positionZ:0,fov:48,near:.15,far:n*6,moveSpeed:1};
+  delete record.view.panX;delete record.view.panY;
+  record.scene={model:'heightfield-sparse-v1',renderer:'software-character-cell-v1',verticalScaleFactor:.24};
+  record.schemaVersion=3;record.project={...(record.project||{}),schemaVersion:3};
+  record.integrity={algorithm:'FNV-1A-32',worldHash:worldFingerprint(record.world)};
+  return record
+}
+
+function migrateV3toV4(record){
+  const view=isPlainObject(record.view)?record.view:{};
+  const legacyColor=view.color===false?'monochrome':'material';
+  const legacyExposure=Number.isFinite(Number(view.exposure))&&Number(view.exposure)>0?Math.log2(Number(view.exposure)):0;
+  record.view={...view,cameraPreset:safeString(view.cameraPreset,view.cameraMode==='fly'?'fly':'orbit',24),renderMode:['shaded','semantic','hybrid'].includes(view.renderMode)?view.renderMode:'hybrid',autoResolution:view.autoResolution!==false&&view.resolutionMode!=='custom',outputColumns:finiteNumber(view.outputColumns,108,48,200),captureColumns:Number(view.captureColumns)===0?0:Number(view.captureColumns)>0?finiteNumber(view.captureColumns,160,48,240):160,adaptiveResolution:view.adaptiveResolution!==false,contrast:finiteNumber(view.contrast,1.1,.5,1.8),exposure:finiteNumber(legacyExposure,0,-2,2),edgeStrength:finiteNumber(view.edgeStrength,.55,0,1.5),depthFade:finiteNumber(view.depthFade,.22,0,1),colorMode:['material','monochrome','two-tone','depth'].includes(view.colorMode)?view.colorMode:(view.colorMode==='twoTone'?'two-tone':legacyColor),foreground:safeString(view.foreground||view.foregroundColor,'#dce8dd',32),background:safeString(view.background||view.backgroundColor,'#060807',32)};
+  delete record.view.resolutionMode;delete record.view.foregroundColor;delete record.view.backgroundColor;delete record.view.color;delete record.view.shadow;
+  record.scene={...(isPlainObject(record.scene)?record.scene:{}),model:'heightfield-sparse-v1',renderer:'software-ascii-vision-v2',verticalScaleFactor:finiteNumber(record?.scene?.verticalScaleFactor,.24,.05,2)};
+  record.schemaVersion=4;record.project={...(record.project||{}),schemaVersion:4};
+  record.integrity={algorithm:'FNV-1A-32',worldHash:worldFingerprint(record.world)};
+  return record
+}
+const RECORD_MIGRATIONS={1:migrateV1toV2,2:migrateV2toV3,3:migrateV3toV4};
+function validateRecord(record){
+  if(!isPlainObject(record)||record.format!=='GLYPHSCAPE_PROJECT')throw new Error('This file is not a GLYPHSCAPE project.');
+  if(Number(record.schemaVersion)!==SCHEMA_VERSION)throw new Error(`Project schema ${record.schemaVersion} could not be normalized to schema ${SCHEMA_VERSION}.`);
+  const rawWorld=record.world;if(record.integrity?.worldHash){const actual=worldFingerprint(rawWorld);if(actual!==record.integrity.worldHash)throw new Error(`Project integrity check failed (${actual} does not match ${record.integrity.worldHash}).`)}
+  const world=serializeWorld(deserializeWorld(rawWorld)),projectRaw=isPlainObject(record.project)?record.project:{},generationRaw=isPlainObject(record.generation)?record.generation:{},viewRaw=isPlainObject(record.view)?record.view:{},layersRaw=isPlainObject(viewRaw.layers)?viewRaw.layers:{},toolRaw=isPlainObject(record.tool)?record.tool:{},simRaw=isPlainObject(record.simulation)?record.simulation:{},sceneRaw=isPlainObject(record.scene)?record.scene:{};
+  const allowedPresets=['highlands','archipelago','canyon','plateau','plains','crater'],allowedClimates=['temperate','arid','tropical','polar','continental'],allowedGlyphs=Object.keys(GLYPH_RAMPS),allowedPalettes=Object.keys(PALETTES),allowedModes=['orbit','inspect','sculpt','paint'],allowedRenderModes=['shaded','semantic','hybrid'],allowedColorModes=['material','monochrome','two-tone','depth'],allowedCameraPresets=['orbit','fly','custom','top','isometric'];
+  const baseline=simRaw.baselineWorld?serializeWorld(deserializeWorld(simRaw.baselineWorld)):cloneRecord(world);
+  const normalized={
+    format:'GLYPHSCAPE_PROJECT',version:safeString(record.version,'1.0.0',24),schemaVersion:SCHEMA_VERSION,
+    project:{id:safeString(projectRaw.id,uid(),120),name:safeString(projectRaw.name,'Untitled World',80)||'Untitled World',createdAt:validISO(projectRaw.createdAt),updatedAt:validISO(projectRaw.updatedAt),schemaVersion:SCHEMA_VERSION,isSample:!!projectRaw.isSample},
+    scene:{model:safeString(sceneRaw.model,'heightfield-sparse-v1',80),renderer:safeString(sceneRaw.renderer,'software-ascii-vision-v2',80),verticalScaleFactor:finiteNumber(sceneRaw.verticalScaleFactor,.24,.05,2)},
+    generation:{seed:safeString(generationRaw.seed,'green-shoe',64),preset:allowedPresets.includes(generationRaw.preset)?generationRaw.preset:'highlands',resolution:finiteNumber(generationRaw.resolution,world.n,8,256),seaLevel:finiteNumber(generationRaw.seaLevel,.34,0,.7),roughness:finiteNumber(generationRaw.roughness,.58,.1,1),climate:allowedClimates.includes(generationRaw.climate)?generationRaw.climate:'temperate',settlements:finiteNumber(generationRaw.settlements,4,0,50)},
+    view:{yaw:normalizeAngle(finiteNumber(viewRaw.yaw,-38*Math.PI/180,-Math.PI*100,Math.PI*100)),pitch:normalizeAngle(finiteNumber(viewRaw.pitch,-28*Math.PI/180,-Math.PI*100,Math.PI*100)),roll:normalizeAngle(finiteNumber(viewRaw.roll,0,-Math.PI*100,Math.PI*100)),zoom:finiteNumber(viewRaw.zoom,1,.08,12),cameraMode:viewRaw.cameraMode==='fly'?'fly':'orbit',cameraPreset:allowedCameraPresets.includes(viewRaw.cameraPreset)?viewRaw.cameraPreset:(viewRaw.cameraMode==='fly'?'fly':'orbit'),targetX:finiteNumber(viewRaw.targetX,0,-1e6,1e6),targetY:finiteNumber(viewRaw.targetY,0,-1e6,1e6),targetZ:finiteNumber(viewRaw.targetZ,0,-1e6,1e6),positionX:finiteNumber(viewRaw.positionX,0,-1e6,1e6),positionY:finiteNumber(viewRaw.positionY,0,-1e6,1e6),positionZ:finiteNumber(viewRaw.positionZ,0,-1e6,1e6),fov:finiteNumber(viewRaw.fov,48,20,100),near:finiteNumber(viewRaw.near,.15,.02,20),far:finiteNumber(viewRaw.far,world.n*6,world.n*2,world.n*30),moveSpeed:finiteNumber(viewRaw.moveSpeed,1,.1,8),projection:['perspective','orthographic'].includes(viewRaw.projection)?viewRaw.projection:'perspective',renderMode:allowedRenderModes.includes(viewRaw.renderMode)?viewRaw.renderMode:'hybrid',glyphSet:allowedGlyphs.includes(viewRaw.glyphSet)?viewRaw.glyphSet:'classic',palette:allowedPalettes.includes(viewRaw.palette)?viewRaw.palette:'natural',autoResolution:viewRaw.autoResolution!==false,outputColumns:finiteNumber(viewRaw.outputColumns,108,48,200),captureColumns:Number(viewRaw.captureColumns)===0?0:Number(viewRaw.captureColumns)>0?finiteNumber(viewRaw.captureColumns,160,48,240):160,adaptiveResolution:viewRaw.adaptiveResolution!==false,contrast:finiteNumber(viewRaw.contrast,1.1,.5,1.8),exposure:finiteNumber(viewRaw.exposure,0,-2,2),edgeStrength:finiteNumber(viewRaw.edgeStrength,.55,0,1.5),depthFade:finiteNumber(viewRaw.depthFade,.22,0,1),colorMode:allowedColorModes.includes(viewRaw.colorMode)?viewRaw.colorMode:(viewRaw.colorMode==='twoTone'?'two-tone':(viewRaw.color===false?'monochrome':'material')),foreground:safeString(viewRaw.foreground||viewRaw.foregroundColor,'#dce8dd',32),background:safeString(viewRaw.background||viewRaw.backgroundColor,'#060807',32),detail:finiteNumber(viewRaw.detail,1,.1,1),layers:{terrain:layersRaw.terrain!==false,water:layersRaw.water!==false,vegetation:layersRaw.vegetation!==false,structures:layersRaw.structures!==false,agents:layersRaw.agents!==false,weather:layersRaw.weather!==false}},
+    tool:{mode:allowedModes.includes(toolRaw.mode)?toolRaw.mode:'orbit',sculptAction:['raise','lower','smooth'].includes(toolRaw.sculptAction)?toolRaw.sculptAction:'raise',radius:finiteNumber(toolRaw.radius,3,1,20),strength:finiteNumber(toolRaw.strength,.4,.01,1),paintLayer:['moisture','temperature','vegetation','water','fire'].includes(toolRaw.paintLayer)?toolRaw.paintLayer:'moisture',paintValue:finiteNumber(toolRaw.paintValue,.7,0,1),paintRadius:finiteNumber(toolRaw.paintRadius,3,1,20)},
+    simulation:{speed:finiteNumber(simRaw.speed,1,.25,100),stepMs:finiteNumber(simRaw.stepMs,550,50,5000),baselineWorld:baseline,baselineEventLog:normalizeEventLog(simRaw.baselineEventLog)},world,eventLog:normalizeEventLog(record.eventLog)
+  };
+  normalized.integrity={algorithm:'FNV-1A-32',worldHash:worldFingerprint(normalized.world)};return normalized
+}
+function migrateRecord(record){if(!isPlainObject(record)||record.format!=='GLYPHSCAPE_PROJECT')throw new Error('This file is not a GLYPHSCAPE project.');let r=cloneRecord(record),schema=Number(r.schemaVersion)||1;if(!Number.isInteger(schema)||schema<1)throw new Error('Project schema version is invalid.');if(schema>SCHEMA_VERSION)throw new Error(`This project uses newer schema ${schema}; GLYPHSCAPE v${VERSION} supports through schema ${SCHEMA_VERSION}.`);while(schema<SCHEMA_VERSION){const migration=RECORD_MIGRATIONS[schema];if(!migration)throw new Error(`No safe migration is available from schema ${schema}.`);r=migration(r);schema=Number(r.schemaVersion)}return validateRecord(r)}
+function makeRecord({touch=true}={}){
+  state.project.name=($('#projectName').value||'Untitled World').trim().slice(0,80)||'Untitled World';state.project.schemaVersion=SCHEMA_VERSION;if(touch)state.project.updatedAt=nowISO();
+  const world=serializeWorld(),baseline=state.simulationBaseline?serializeWorld(state.simulationBaseline):cloneRecord(world);
+  const record={format:'GLYPHSCAPE_PROJECT',version:VERSION,schemaVersion:SCHEMA_VERSION,project:{...state.project},scene:{...state.scene},generation:{...state.generation},view:{...state.view,layers:{...state.view.layers}},tool:{...state.tool},simulation:{speed:state.sim.speed,stepMs:state.sim.stepMs,baselineWorld:baseline,baselineEventLog:state.baselineEventLog.slice(0,500)},world,eventLog:state.eventLog.slice(0,500)};
+  record.integrity={algorithm:'FNV-1A-32',worldHash:worldFingerprint(world)};return record
+}
+function applyRecord(raw,{preserveHistory=false}={}){
+  const r=migrateRecord(raw);state.project={...r.project,schemaVersion:SCHEMA_VERSION};state.scene={...r.scene};state.generation={...r.generation};state.view={...r.view,layers:{...r.view.layers}};state.tool={...r.tool};state.world=deserializeWorld(r.world);state.simulationBaseline=deserializeWorld(r.simulation.baselineWorld);state.baselineEventLog=normalizeEventLog(r.simulation.baselineEventLog);state.sim.speed=r.simulation.speed;state.sim.stepMs=r.simulation.stepMs;state.sim.playing=false;state.sim.accumulator=0;state.eventLog=normalizeEventLog(r.eventLog);state.selection=null;state.sceneFrame=null;state.asciiFrame=null;state.lastAscii='';if(!preserveHistory){state.history=[];state.future=[]}syncControlsFromState();updateAllUI();requestRender();setStatus(`Loaded ${state.project.name}.`);return r
+}
+function scheduleSave(){clearTimeout(state.saveTimer);if(state.recoveryHold){setAutosave('recovery');state.saveTimer=setTimeout(()=>saveActive(),420);return}setAutosave('unsaved');state.saveTimer=setTimeout(()=>{setAutosave('saving');saveActive()},420)}
+async function saveActive({force=false}={}){try{const record=makeRecord(),json=JSON.stringify(record);state.sessionStorage.set(ACTIVE_KEY,json);state.sessionProjects.set(record.project.id,cloneRecord(record));if(state.recoveryHold&&!force){setAutosave('recovery','Recovery needed');return false}const localSaved=storageSet(ACTIVE_KEY,json);storageSet(SETTINGS_KEY,JSON.stringify({theme:state.ui.theme,leftOpen:state.ui.leftOpen,rightOpen:state.ui.rightOpen}));const dbSaved=await dbPut(record);if(dbSaved||localSaved){state.storageMode=dbSaved&&localSaved?'Indexed Database and local fallback':dbSaved?'Indexed Database':'local storage';setAutosave('saved','Saved locally');for(const key of LEGACY_ACTIVE_KEYS)storageRemove(key);state.lastStorageError=null}else{state.storageMode='session only';setAutosave('session','Session only');warnSessionOnly()}return dbSaved||localSaved}catch(error){rememberStorageError(error,'project serialization');setAutosave('error');toast('Autosave failed',error.message,'error',6000);return false}}
+function setRecoveryCandidate(raw,source,error){if(state.recoveryCandidate)return;state.recoveryCandidate={raw:typeof raw==='string'?raw:JSON.stringify(raw,null,2),source,error:error?.message||String(error),version:VERSION,at:nowISO()};state.recoveryHold=true}
+async function restoreActive(){const candidates=[ACTIVE_KEY,...LEGACY_ACTIVE_KEYS];for(const key of candidates){const raw=storageGet(key);if(!raw)continue;try{applyRecord(JSON.parse(raw));if(key!==ACTIVE_KEY)state.sessionStorage.set(ACTIVE_KEY,raw);return true}catch(error){setRecoveryCandidate(raw,`Active project key ${key}`,error)}}const records=await dbList();for(const raw of records){try{applyRecord(raw);return true}catch(error){setRecoveryCandidate(raw,'Indexed Database project',error)}}return false}
+function historySnapshot(label='Edit'){return{label,world:serializeWorld(),selection:state.selection?{...state.selection}:null,eventLog:state.eventLog.slice(0,500),simulationBaseline:state.simulationBaseline?serializeWorld(state.simulationBaseline):null,baselineEventLog:state.baselineEventLog.slice(0,500)}}
+function pushHistory(label='Edit'){try{state.history.push(historySnapshot(label));if(state.history.length>32)state.history.shift();state.future=[];updateHistoryButtons()}catch(error){console.warn('History snapshot failed',error)}}
+function restoreSnapshot(snap){if(!snap)return;state.world=deserializeWorld(snap.world);state.selection=snap.selection;state.eventLog=normalizeEventLog(snap.eventLog);state.simulationBaseline=snap.simulationBaseline?deserializeWorld(snap.simulationBaseline):deserializeWorld(snap.world);state.baselineEventLog=normalizeEventLog(snap.baselineEventLog);state.sim.playing=false;updateAllUI();requestRender();scheduleSave()}
+function undo(){const snap=state.history.pop();if(!snap)return;state.future.push(historySnapshot(snap.label));restoreSnapshot(snap);setStatus(`Undid ${snap.label}.`);updateHistoryButtons()}
+function redo(){const snap=state.future.pop();if(!snap)return;state.history.push(historySnapshot(snap.label));restoreSnapshot(snap);setStatus(`Redid ${snap.label}.`);updateHistoryButtons()}
+function updateHistoryButtons(){$('#undoBtn').disabled=!state.history.length;$('#redoBtn').disabled=!state.future.length}
+
+function climateParams(kind){return({temperate:{temp:.58,moist:.56},arid:{temp:.74,moist:.23},tropical:{temp:.78,moist:.78},polar:{temp:.18,moist:.5},continental:{temp:.46,moist:.44}}[kind]||{temp:.58,moist:.56})}
+function generateWorld({sample=false,recordHistory=true}={}){
+  const g=state.generation,n=g.resolution,len=n*n,seed=hashString(`${g.seed}|${g.preset}|${g.climate}|${n}|${g.roughness}`),rng=mulberry32(seed);
+  if(recordHistory)pushHistory('world generation');
+  const world=blankWorld(n),rough=g.roughness,cp=climateParams(g.climate);world.isBlank=false;
+  let min=Infinity,max=-Infinity;
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++){
+    const i=y*n+x,nx=x/(n-1)*2-1,ny=y/(n-1)*2-1,r=Math.hypot(nx,ny),angle=Math.atan2(ny,nx);
+    const base=fbm(x/n*3.4,y/n*3.4,seed,6),ridge=ridged(x/n*2.8,y/n*2.8,seed+991),detail=fbm(x/n*10,y/n*10,seed+2281,3);
+    let h=.5;
+    switch(g.preset){
+      case'archipelago':{const islands=clamp(1-r*.82)+Math.sin(angle*5+r*12)*.065;h=base*.5+ridge*.18+islands*.42-.22;break}
+      case'canyon':{const channels=Math.abs(Math.sin(nx*5.4+fbm(nx*2,ny*2,seed+4)*3));h=.77-channels*.45+ridge*.24+detail*.05;break}
+      case'plateau':{const p=clamp((base-.38)*2.2);h=Math.round(p*5)/5*.72+ridge*.17+detail*.05;break}
+      case'plains':h=.36+base*.26+detail*.07+ridge*.07;break;
+      case'crater':{const rim=Math.exp(-Math.pow((r-.46)*10,2))*.42,center=Math.exp(-r*r*9)*.35;h=.42+base*.25+rim-center+detail*.04;break}
+      default:{const mountain=Math.pow(ridge,1.55);h=base*.35+mountain*.52+detail*.08-clamp(r-.78)*.34;break}
+    }
+    h=lerp(.5,h,rough);world.height[i]=h;min=Math.min(min,h);max=Math.max(max,h)
+  }
+  const span=max-min||1;for(let i=0;i<len;i++)world.height[i]=clamp((world.height[i]-min)/span);
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++){
+    const i=y*n+x,lat=Math.abs(y/(n-1)*2-1),h=world.height[i];
+    const mNoise=fbm(x/n*4.1,y/n*4.1,seed+5003,5),tNoise=fbm(x/n*3.2,y/n*3.2,seed+7001,4);
+    world.moisture[i]=clamp(cp.moist*.65+mNoise*.45-h*.12);
+    world.temperature[i]=clamp(cp.temp*.78+tNoise*.24-lat*.28-Math.max(0,h-.55)*.5);
+    world.water[i]=h<g.seaLevel?clamp((g.seaLevel-h)*4.2):0;
+    world.vegetation[i]=0;
+  }
+  deriveBiomes(world,true);
+  placeSettlements(world,Number(g.settlements)||0,rng,seed);
+  world.weather='Clear';world.weatherDays=3+Math.floor(rng()*5);state.world=world;state.project.isSample=sample;state.selection=null;state.sim.playing=false;state.sim.accumulator=0;state.eventLog=[];
+  if(['top','isometric'].includes(state.view.cameraPreset)||state.view.projection==='orthographic')frameWorld({restoreOrientation:true});else if(state.view.cameraMode==='orbit'){state.view.targetX=0;state.view.targetY=0;state.view.targetZ=0;state.view.zoom=1;state.view.projection='perspective';state.view.cameraPreset='orbit';rememberPerspectiveOrbit()}
+  logEvent(`Generated ${g.preset} world from seed “${g.seed}”.`);state.simulationBaseline=deserializeWorld(serializeWorld(world));state.baselineEventLog=state.eventLog.slice(0,500);syncControlsFromState();updateAllUI();requestRender();scheduleSave();setStatus(`Generated ${n} × ${n} deterministic world.`);toast('World generated',`${n} × ${n} cells from seed “${g.seed}”.`)
+}
+function deriveBiomes(world=state.world,initializeVegetation=false){const n=world.n,sea=state.generation.seaLevel;for(let i=0;i<n*n;i++){
+  const h=world.height[i],m=world.moisture[i],t=world.temperature[i],w=world.water[i];let b=3;
+  if(h<sea||w>.62)b=0;else if(h<sea+.025)b=1;else if(world.fire[i]>.15)b=9;else if(t<.17)b=10;else if(h>.82)b=t<.42?10:7;else if(w>.12&&m>.58)b=8;else if(t>.68&&m<.32)b=2;else if(t>.67&&m>.7)b=5;else if(m>.58)b=4;else if(t<.35)b=6;else b=3;
+  world.biome[i]=b;if(initializeVegetation){const target=[0,.02,.06,.55,.78,.94,.18,.06,.58,0,.03][b];world.vegetation[i]=clamp(target*(.75+hash2(i%n,Math.floor(i/n),hashString(state.generation.seed)+19)*.32))}
+}}
+function findLandCell(world,rng,minDist=0,existing=[]){const n=world.n,sea=state.generation.seaLevel;for(let tries=0;tries<1500;tries++){const x=2+Math.floor(rng()*(n-4)),y=2+Math.floor(rng()*(n-4)),i=y*n+x;if(world.height[i]<=sea+.05||world.height[i]>.78||world.biome[i]===2||world.biome[i]===7||world.biome[i]===10)continue;if(existing.some(p=>Math.hypot(p.x-x,p.y-y)<minDist))continue;return{x,y}}return null}
+function placeSettlements(world,count,rng,seedKey=hashString(state.generation.seed)){for(let s=0;s<count;s++){const p=findLandCell(world,rng,world.n*.16,world.structures);if(!p)continue;const sid=`settlement-${seedKey.toString(36)}-${s}`,rotation=rng()*Math.PI*2,type=s%3===0?'tower':'village';world.blocks.push({id:`foundation-${seedKey.toString(36)}-${s}`,x:p.x,y:p.y,type:'foundation',name:`Foundation ${s+1}`,material:'stone',rotation,scaleX:type==='tower'?1.7:2.7,scaleY:.34,scaleZ:type==='tower'?1.7:2.35,elevationOffset:-.17,visible:true,locked:false});world.structures.push({id:sid,x:p.x,y:p.y,type,name:`Settlement ${s+1}`,rotation,scale:1,elevationOffset:.12,visible:true,locked:false});const agentCount=2+Math.floor(rng()*4);for(let a=0;a<agentCount;a++){const agentIndex=world.agents.length;world.agents.push({id:`agent-${seedKey.toString(36)}-${s}-${a}`,x:p.x+rng()-.5,y:p.y+rng()-.5,energy:.6+rng()*.4,name:`Traveler ${agentIndex+1}`,heading:rng()*Math.PI*2,visible:true,locked:false})}}}
+
+function idx(x,y,n=state.world.n){return y*n+x}
+function slopeAt(x,y,world=state.world){const n=world.n,x0=Math.max(0,x-1),x1=Math.min(n-1,x+1),y0=Math.max(0,y-1),y1=Math.min(n-1,y+1);return Math.hypot(world.height[idx(x1,y,n)]-world.height[idx(x0,y,n)],world.height[idx(x,y1,n)]-world.height[idx(x,y0,n)])*.5}
+function setWeather(name,days=4){state.world.weather=name;state.world.weatherDays=days;logEvent(`Weather changed to ${name.toLowerCase()}.`);updateMetrics();requestRender()}
+function chooseWeather(){const seed=hashString(`${state.generation.seed}|weather|${Math.floor(state.world.day/4)}`),r=mulberry32(seed)(),season=Math.floor(state.world.day/90)%4,climate=state.generation.climate;let options=['Clear','Clear','Cloudy','Wind','Rain','Fog'];if(season===3||climate==='polar')options.push('Snow','Snow');if(climate==='arid')options=['Clear','Clear','Clear','Wind','Cloudy','Rain'];if(climate==='tropical')options=['Rain','Rain','Cloudy','Clear','Fog','Wind'];setWeather(options[Math.floor(r*options.length)],3+Math.floor(r*6))}
+function simulationStep(days=1){const w=state.world;if(w.isBlank)return;const n=w.n,len=n*n;for(let dayStep=0;dayStep<days;dayStep++){
+  w.day+=1;w.weatherDays-=1;if(w.weatherDays<=0)chooseWeather();
+  const season=Math.floor(w.day/90)%4;const rain=w.weather==='Rain'?.022:w.weather==='Snow'?.008:0;const dry=state.generation.climate==='arid'?.0045:.0025;const tempSeason=Math.sin((w.day/360)*Math.PI*2-Math.PI/2)*.07;
+  const nextWater=new Float32Array(w.water);const nextFire=new Float32Array(w.fire);
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++){
+    const i=idx(x,y,n);w.temperature[i]=clamp(w.temperature[i]*.992+(climateParams(state.generation.climate).temp+tempSeason)*.008);w.moisture[i]=clamp(w.moisture[i]+rain*(.65+hash2(x,y,Math.floor(w.day))*.7)-dry*(.6+w.temperature[i]));
+    if(rain)nextWater[i]=clamp(nextWater[i]+rain*Math.max(0,.9-w.height[i])*.65);
+    if(w.water[i]>.004){const level=w.height[i]+w.water[i]*.35;let lowest=-1,lowestLevel=level;const neighbors=[[x-1,y],[x+1,y],[x,y-1],[x,y+1]];for(const[qx,qy]of neighbors){if(qx<0||qy<0||qx>=n||qy>=n)continue;const qi=idx(qx,qy,n),ql=w.height[qi]+w.water[qi]*.35;if(ql<lowestLevel){lowest=qi;lowestLevel=ql}}if(lowest>=0){const flow=Math.min(w.water[i]*.16,(level-lowestLevel)*.12);nextWater[i]-=flow;nextWater[lowest]+=flow}}
+    nextWater[i]=clamp(nextWater[i]-(w.temperature[i]*.0015));
+    const biomeTarget=[0,.03,.05,.55,.79,.95,.2,.06,.62,0,.02][w.biome[i]];const health=clamp(w.moisture[i]*1.25)*(1-Math.abs(w.temperature[i]-.55)*.75);if(w.fire[i]>.04){w.vegetation[i]=clamp(w.vegetation[i]-w.fire[i]*.11);nextFire[i]=clamp(w.fire[i]-.045-w.moisture[i]*.018);if(w.vegetation[i]>.18){for(const[qx,qy]of [[x-1,y],[x+1,y],[x,y-1],[x,y+1]]){if(qx<0||qy<0||qx>=n||qy>=n)continue;const qi=idx(qx,qy,n);if(w.vegetation[qi]>.35&&w.moisture[qi]<.62&&hash2(qx,qy,Math.floor(w.day)*31+i) < w.fire[i]*.14)nextFire[qi]=Math.max(nextFire[qi],.45)}}}else{w.vegetation[i]=clamp(w.vegetation[i]+(biomeTarget*health-w.vegetation[i])*.0055)}
+  }
+  w.water=nextWater;w.fire=nextFire;
+  for(const a of w.agents){a.heading+=(hash2(Math.floor(a.x*9),Math.floor(a.y*9),Math.floor(w.day)+hashString(a.id))-.5)*.8;let nx=clamp(a.x+Math.cos(a.heading)*.18,1,n-2),ny=clamp(a.y+Math.sin(a.heading)*.18,1,n-2),ni=idx(Math.round(nx),Math.round(ny),n);if(w.height[ni]>state.generation.seaLevel+.015&&w.height[ni]<.86&&w.fire[ni]<.2){a.x=nx;a.y=ny}else a.heading+=Math.PI*.7;a.energy=clamp(a.energy+(.55-w.vegetation[ni])*.002,.2,1)}
+  if(Math.floor(w.day)%8===0)deriveBiomes(w,false)
+ }
+ updateMetrics();updateSelectionUI();requestRender();scheduleSave()
+}
+function applyEvent(type){const w=state.world;if(w.isBlank){toast('Generate a world first','Events need a world model to affect.','warn');return}pushHistory(`event: ${type}`);const n=w.n,rng=mulberry32(hashString(`${state.generation.seed}|${type}|${w.day}|${Date.now()}`));let message='';
+ switch(type){
+  case'rainstorm':for(let i=0;i<n*n;i++){w.moisture[i]=clamp(w.moisture[i]+.18);if(w.height[i]<state.generation.seaLevel+.18)w.water[i]=clamp(w.water[i]+.055)}w.weather='Rain';w.weatherDays=7;message='A sustained rainstorm crossed the world.';break;
+  case'drought':for(let i=0;i<n*n;i++){w.moisture[i]=clamp(w.moisture[i]-.28);w.water[i]*=.72;w.vegetation[i]*=.94}w.weather='Clear';w.weatherDays=12;message='Drought reduced moisture and surface water.';break;
+  case'wildfire':{let candidates=[];for(let i=0;i<n*n;i++)if(w.vegetation[i]>.5&&w.water[i]<.08)candidates.push(i);const center=candidates.length?candidates[Math.floor(rng()*candidates.length)]:Math.floor(rng()*n*n);for(let oy=-3;oy<=3;oy++)for(let ox=-3;ox<=3;ox++){const x=center%n+ox,y=Math.floor(center/n)+oy;if(x>=0&&y>=0&&x<n&&y<n&&Math.hypot(ox,oy)<=3)w.fire[idx(x,y,n)]=Math.max(w.fire[idx(x,y,n)],clamp(1-Math.hypot(ox,oy)/4))}message='Wildfire ignited in a vegetated region.';break}
+  case'flood':for(let i=0;i<n*n;i++)if(w.height[i]<state.generation.seaLevel+.2)w.water[i]=clamp(w.water[i]+.16*(1-w.height[i]));w.weather='Rain';w.weatherDays=4;message='A flood pulse filled low ground and channels.';break;
+  case'meteor':{const cx=8+Math.floor(rng()*(n-16)),cy=8+Math.floor(rng()*(n-16)),radius=Math.max(4,Math.round(n*.07));for(let y=Math.max(0,cy-radius-2);y<Math.min(n,cy+radius+3);y++)for(let x=Math.max(0,cx-radius-2);x<Math.min(n,cx+radius+3);x++){const d=Math.hypot(x-cx,y-cy),i=idx(x,y,n);if(d<radius)w.height[i]=clamp(w.height[i]-(1-d/radius)*.28);else if(d<radius+2)w.height[i]=clamp(w.height[i]+(1-(d-radius)/2)*.14);if(d<radius+3){w.fire[i]=Math.max(w.fire[i],clamp(1-d/(radius+3)));w.vegetation[i]*=.12}}message=`Meteor impact formed a basin near ${cx}, ${cy}.`;break}
+  case'snowfall':for(let i=0;i<n*n;i++)w.temperature[i]=clamp(w.temperature[i]-.17);w.weather='Snow';w.weatherDays=9;deriveBiomes(w,false);message='A cold front brought prolonged snowfall.';break;
+  case'regrow':for(let i=0;i<n*n;i++){w.moisture[i]=clamp(w.moisture[i]+.08);w.vegetation[i]=clamp(w.vegetation[i]+.24*(1-w.fire[i]));w.fire[i]*=.2}deriveBiomes(w,false);message='Vegetation recovery accelerated across suitable ground.';break;
+  case'settlement':{const p=findLandCell(w,rng,n*.12,w.structures);if(p){const rotation=rng()*Math.PI*2,number=w.structures.length+1;w.blocks.push({id:uid(),x:p.x,y:p.y,type:'foundation',name:`Foundation ${number}`,material:'stone',rotation,scaleX:2.7,scaleY:.34,scaleZ:2.35,elevationOffset:-.17,visible:true,locked:false});w.structures.push({id:uid(),x:p.x,y:p.y,type:'village',name:`Settlement ${number}`,rotation,scale:1,elevationOffset:.12,visible:true,locked:false});for(let a=0;a<3;a++)w.agents.push({id:uid(),x:p.x+rng()-.5,y:p.y+rng()-.5,energy:.8,name:`Resident ${w.agents.length+1}`,heading:rng()*Math.PI*2,visible:true,locked:false});message=`A settlement was founded near ${p.x}, ${p.y}.`}else message='No suitable settlement site was found.';break}
+  case'travelers':for(let a=0;a<6;a++){const p=findLandCell(w,rng,0,[]);if(p)w.agents.push({id:uid(),x:p.x,y:p.y,energy:.65+rng()*.35,name:`Traveler ${w.agents.length+1}`,heading:rng()*Math.PI*2,visible:true,locked:false})}message='New travelers entered the world.';break;
+  case'clearfire':for(let i=0;i<n*n;i++)w.fire[i]=0;message='Active fires were suppressed.';break;
+ }
+ deriveBiomes(w,false);logEvent(message,type==='wildfire'||type==='meteor'?'warn':'');updateAllUI();requestRender();scheduleSave();setStatus(message);toast('World event',message)
+}
+
+const canvas=$('#worldCanvas'),ctx=canvas.getContext('2d',{alpha:false});let dpr=1,renderQueued=false,drag=null;
+function requestRender(){state.needsRender=true;if(!renderQueued){renderQueued=true;requestAnimationFrame(()=>{renderQueued=false;render()})}}
+function resizeCanvas(){const rect=canvas.getBoundingClientRect(),nextDpr=Math.min(2,window.devicePixelRatio||1),w=Math.max(2,Math.floor(rect.width*nextDpr)),h=Math.max(2,Math.floor(rect.height*nextDpr));if(canvas.width!==w||canvas.height!==h||dpr!==nextDpr){canvas.width=w;canvas.height=h;dpr=nextDpr;state.needsRender=true}}
+function normalizeAngle(value){const turn=Math.PI*2;return mod(value+Math.PI,turn)-Math.PI}
+function angleDegrees(value){const rounded=Math.round(normalizeAngle(Number(value)||0)*180/Math.PI);return Object.is(rounded,-0)?0:rounded}
+function measureCharacterAspect(){const mono=getComputedStyle(document.documentElement).getPropertyValue('--mono')||'monospace';ctx.save();ctx.font=`700 20px ${mono}`;const widest=Math.max(...['M','W','█','♠','@','⌂'].map(g=>ctx.measureText(g).width));ctx.restore();state.characterAspect=clamp(widest/20,.48,.86);return state.characterAspect}
+function markInteractiveMotion(duration=260){state.motionUntil=performance.now()+duration;state.lastRenderAt=0;state.fps=0;clearTimeout(state.motionTimer);state.motionTimer=setTimeout(()=>{state.motionUntil=0;requestRender()},duration+40)}
+function renderGrid(rect,{captureColumns=null}={}){state.view.characterAspect=measureCharacterAspect();return Ascii.resolutionForViewport(state.view,rect.width,rect.height,{interacting:!captureColumns&&(!!drag||performance.now()<state.motionUntil),renderDuration:state.renderCostEma||state.lastRenderDuration,captureColumns})}
+function composeAscii(frame,phase=0){return Ascii.compose({frame,world:state.world,view:state.view,materials:SceneMaterial,biomes:BIOMES,generation:state.generation,weatherPhase:phase})}
+function renderSceneAt(rect,{captureColumns=null,phase=0}={}){const grid=renderGrid(rect,{captureColumns}),frame=Scene.renderScene({world:state.world,generation:state.generation,view:state.view,scene:state.scene,columns:grid.columns,rows:grid.rows,viewportWidth:rect.width,viewportHeight:rect.height}),ascii=composeAscii(frame,phase);return{grid,frame,ascii}}
+function drawProjectedIndex(ascii,frame,rect){const cellW=rect.width/ascii.cols,cellH=rect.height/ascii.rows;state.projected=[];for(let row=0;row<ascii.rows;row++)for(let col=0;col<ascii.cols;col++){const i=row*ascii.cols+col;if(ascii.chars[i]===' '||!Number.isFinite(frame.depth[i]))continue;state.projected.push({cellX:frame.cellX[i],cellY:frame.cellY[i],screenX:(col+.5)*cellW,screenY:(row+.5)*cellH,depth:frame.depth[i],material:frame.material[i]})}}
+function render(){
+  resizeCanvas();if(!state.needsRender&&!state.sim.playing)return;state.needsRender=false;
+  const started=performance.now(),rect={width:canvas.width/dpr,height:canvas.height/dpr};ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle=state.view.background||'#060807';ctx.fillRect(0,0,rect.width,rect.height);
+  if(state.world.isBlank){drawBlankGrid(rect);state.sceneFrame=null;state.asciiFrame=null;state.lastAscii='';$('#fpsStat').textContent='Frame ready';$('#elevationStat').textContent='Elevation —';$('#asciiResolutionStat').textContent='ASCII —';$('#asciiResolutionValue').textContent=state.view.autoResolution?'Auto':'Custom';return}
+  const phase=Math.floor(performance.now()/220)%2,{grid,frame,ascii}=renderSceneAt(rect,{phase});state.sceneFrame=frame;state.asciiFrame=ascii;state.lastAscii=ascii.text;state.adaptiveScale=grid.scale;state.adaptiveReason=grid.reason;
+  const mono=getComputedStyle(document.documentElement).getPropertyValue('--mono')||'monospace',drawInfo=Ascii.draw(ctx,ascii,rect,{fontFamily:mono,fontWeight:700});drawProjectedIndex(ascii,frame,rect);drawSelection(rect,drawInfo.fontSize);
+  let minH=1,maxH=0;for(const h of state.world.height){minH=Math.min(minH,h);maxH=Math.max(maxH,h)}
+  const t=performance.now(),hadPrevious=state.lastRenderAt>0;if(hadPrevious){const instant=1000/Math.max(1,t-state.lastRenderAt);state.fps=state.fps?state.fps*.86+instant*.14:instant}state.lastRenderAt=t;state.lastRenderDuration=t-started;state.renderCostEma=state.renderCostEma?state.renderCostEma*.68+state.lastRenderDuration*.32:state.lastRenderDuration;clearTimeout(state.recoveryRenderTimer);if(grid.scale<.999&&grid.reason==='frame budget'&&!drag&&performance.now()>=state.motionUntil){state.recoveryRenderTimer=setTimeout(()=>{state.renderCostEma=Math.min(state.renderCostEma,24);requestRender()},180)}
+  $('#fpsStat').textContent=state.sim.playing||drag||performance.now()<state.motionUntil?(hadPrevious?`${Math.max(1,Math.round(state.fps))} frames/second`:'Frame ready'):`Render ${Math.max(1,Math.round(state.lastRenderDuration))} ms`;$('#elevationStat').textContent=`Elevation ${Math.round(minH*100)}–${Math.round(maxH*100)}%`;$('#worldStat').textContent=`${state.world.n} × ${state.world.n} · ${frame.triangles.toLocaleString()} triangles`;$('#asciiResolutionStat').textContent=`ASCII ${frame.cols} × ${frame.rows}${grid.scale<.999?` · ${grid.reason}`:''}`;$('#asciiResolutionValue').textContent=`${frame.cols} × ${frame.rows}`;$('#renderModeStat').textContent=`${state.view.renderMode[0].toUpperCase()+state.view.renderMode.slice(1)} ASCII`;$('#renderModeValue').textContent=state.view.renderMode[0].toUpperCase()+state.view.renderMode.slice(1)
+}
+function drawBlankGrid(rect){ctx.strokeStyle=state.ui.theme==='light'?'rgba(50,80,55,.12)':'rgba(120,170,130,.1)';ctx.lineWidth=1;const gap=28;for(let x=rect.width%gap;x<rect.width;x+=gap){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,rect.height);ctx.stroke()}for(let y=rect.height%gap;y<rect.height;y+=gap){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(rect.width,y);ctx.stroke()}}
+function drawSelection(rect,font){const call=$('#selectionCallout');if(!state.selection){call.classList.remove('visible');return}const{x,y}=state.selection,i=idx(x,y),p=Scene.projectGridPoint({world:state.world,generation:state.generation,view:state.view,scene:state.scene,gx:x,gz:y,height:state.world.height[i]+.006,viewportWidth:rect.width,viewportHeight:rect.height});if(!p||p.x<0||p.y<0||p.x>rect.width||p.y>rect.height){call.classList.remove('visible');return}ctx.strokeStyle='#d9ff72';ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,Math.max(6,font*.65),0,Math.PI*2);ctx.stroke();call.style.left=`${p.x}px`;call.style.top=`${p.y}px`;call.classList.add('visible');call.innerHTML=`<b>${x}, ${y}</b><br>${escapeHtml(BIOMES[state.world.biome[i]].name)} · ${Math.round(state.world.height[i]*100)}% elevation`}
+function buildAsciiFrame(columns=state.view.captureColumns||0,phase=0){if(state.world.isBlank)return null;const rect={width:Math.max(1,canvas.clientWidth),height:Math.max(1,canvas.clientHeight)};return renderSceneAt(rect,{captureColumns:Number(columns)>0?Number(columns):null,phase})}
+function captureBundle(){if(state.world.isBlank)return null;if(!state.view.captureColumns&&state.asciiFrame&&state.sceneFrame)return{grid:{columns:state.asciiFrame.cols,rows:state.asciiFrame.rows,scale:1,reason:'viewport'},frame:state.sceneFrame,ascii:state.asciiFrame};return buildAsciiFrame(state.view.captureColumns||0,0)}
+function captureCanvas(){const bundle=captureBundle();if(!bundle)return null;const width=Math.max(640,bundle.ascii.cols*9),height=Math.max(360,bundle.ascii.rows*15),out=document.createElement('canvas');out.width=width;out.height=height;const outCtx=out.getContext('2d',{alpha:false});Ascii.draw(outCtx,bundle.ascii,{width,height},{fontFamily:'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',fontWeight:700});return{canvas:out,...bundle}}
+
+function raycastClient(clientX,clientY){const r=canvas.getBoundingClientRect();return Scene.raycastTerrain({world:state.world,generation:state.generation,view:state.view,scene:state.scene,px:clientX-r.left,py:clientY-r.top,viewportWidth:r.width,viewportHeight:r.height})}
+function selectCell(x,y,clientX=null,clientY=null){state.selection={x:clamp(Math.round(x),0,state.world.n-1),y:clamp(Math.round(y),0,state.world.n-1)};updateSelectionUI();requestRender();if(clientX!=null){const r=$('#viewport').getBoundingClientRect(),call=$('#selectionCallout');call.style.left=`${clientX-r.left}px`;call.style.top=`${clientY-r.top}px`}scheduleSave()}
+function beginStroke(){if(state.strokeSnapshot)return;state.strokeSnapshot={label:`${state.tool.mode} stroke`,world:serializeWorld(),selection:state.selection?{...state.selection}:null};state.strokeChanged=false}
+function finishStroke(){if(state.strokeChanged&&state.strokeSnapshot){state.history.push(state.strokeSnapshot);if(state.history.length>32)state.history.shift();state.future=[];updateHistoryButtons();deriveBiomes(state.world,false);if(state.world.day===0&&!state.sim.playing){state.simulationBaseline=deserializeWorld(serializeWorld(state.world));state.baselineEventLog=state.eventLog.slice(0,500)}updateAllUI();scheduleSave()}state.strokeSnapshot=null;state.strokeChanged=false}
+function applyBrushAt(x,y){const w=state.world,n=w.n;if(w.isBlank)return;const radius=state.tool.mode==='paint'?state.tool.paintRadius:state.tool.radius,cx=Math.round(x),cy=Math.round(y);for(let oy=-radius;oy<=radius;oy++)for(let ox=-radius;ox<=radius;ox++){const qx=cx+ox,qy=cy+oy;if(qx<0||qy<0||qx>=n||qy>=n)continue;const dist=Math.hypot(ox,oy);if(dist>radius)continue;const fall=Math.pow(1-dist/(radius+.001),1.4),i=idx(qx,qy,n);if(state.tool.mode==='sculpt'){const amt=state.tool.strength*.035*fall;if(state.tool.sculptAction==='raise')w.height[i]=clamp(w.height[i]+amt);else if(state.tool.sculptAction==='lower')w.height[i]=clamp(w.height[i]-amt);else{let sum=0,count=0;for(let sy=-1;sy<=1;sy++)for(let sx=-1;sx<=1;sx++){const nx=qx+sx,ny=qy+sy;if(nx>=0&&ny>=0&&nx<n&&ny<n){sum+=w.height[idx(nx,ny,n)];count++}}w.height[i]=lerp(w.height[i],sum/count,state.tool.strength*.18*fall)}}else if(state.tool.mode==='paint'){const target=state.tool.paintValue,amount=.22*fall,key=state.tool.paintLayer;if(key==='fire')w.fire[i]=lerp(w.fire[i],target,amount);else if(key==='water')w.water[i]=lerp(w.water[i],target*.45,amount);else if(key in w)w[key][i]=lerp(w[key][i],target,amount)}state.strokeChanged=true}selectCell(cx,cy);requestRender()}
+function setMode(mode){state.tool.mode=mode;$$('.mode-btn').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));$('#viewport').dataset.mode=mode;const label=mode==='orbit'?'Navigate':mode[0].toUpperCase()+mode.slice(1);$('#pointerModeStat').textContent=`${label} mode`;['orbit','inspect','sculpt','paint'].forEach(m=>{$(`#${m}Tool`).hidden=m!==mode});setStatus({orbit:`Navigate using the ${state.view.cameraMode==='fly'?'Free Fly':'Orbit'} camera. Left-drag looks; right or Alt-drag rolls; Shift or middle-drag pans.`,inspect:'Ray-cast a visible terrain location to inspect it.',sculpt:'Drag across the ray-cast terrain surface to sculpt elevation.',paint:'Drag across the ray-cast terrain surface to paint world properties.'}[mode]);scheduleSave()}
+function rememberPerspectiveOrbit(){if(state.view.cameraMode==='orbit'&&state.view.projection==='perspective'&&!['top','isometric'].includes(state.view.cameraPreset)){state.lastOrbitView={yaw:state.view.yaw,pitch:state.view.pitch,roll:state.view.roll,zoom:state.view.zoom,targetX:state.view.targetX,targetY:state.view.targetY,targetZ:state.view.targetZ,fov:state.view.fov,near:state.view.near,far:state.view.far}}}
+function frameWorld({restoreOrientation=true}={}){if(state.view.cameraMode==='fly')Scene.switchCameraMode(state.view,state.world,'orbit');const remembered=restoreOrientation&&state.lastOrbitView?state.lastOrbitView:null;Object.assign(state.view,{cameraMode:'orbit',cameraPreset:'orbit',projection:'perspective',targetX:0,targetY:0,targetZ:0,zoom:1,positionX:0,positionY:0,positionZ:0,fov:remembered?.fov??48,near:.15,far:state.world.n*6});if(remembered){state.view.yaw=remembered.yaw;state.view.pitch=remembered.pitch;state.view.roll=remembered.roll}else{state.view.yaw=-38*Math.PI/180;state.view.pitch=-28*Math.PI/180;state.view.roll=0}rememberPerspectiveOrbit();markInteractiveMotion();updateCameraControls();requestRender()}
+function setCameraMode(mode){if(mode!=='orbit'&&mode!=='fly')return;if(mode==='orbit'&&['top','isometric'].includes(state.view.cameraPreset)){frameWorld({restoreOrientation:true});scheduleSave();setStatus('Perspective Orbit restored and the world was framed.');return}if(mode==='fly')rememberPerspectiveOrbit();Scene.switchCameraMode(state.view,state.world,mode);state.view.cameraPreset=mode;if(mode==='orbit')state.view.projection='perspective';markInteractiveMotion();updateCameraControls();requestRender();scheduleSave();setStatus(mode==='fly'?'Free Fly active. Use W A S D to move, Q/E vertically, and drag to look.':'Perspective Orbit active. Drag to rotate around the current focus point.')}
+function applyCameraPreset(preset){
+  if(preset==='orbit'||preset==='fly'){setCameraMode(preset);return}
+  if(!['top','isometric'].includes(preset))return;
+  rememberPerspectiveOrbit();
+  if(state.view.cameraMode==='fly')Scene.switchCameraMode(state.view,state.world,'orbit');
+  state.view.cameraMode='orbit';state.view.cameraPreset=preset;state.view.projection='orthographic';state.view.roll=0;state.view.zoom=1;state.view.targetX=0;state.view.targetY=0;state.view.targetZ=0;
+  if(preset==='top'){state.view.yaw=0;state.view.pitch=-Math.PI/2+.0001}else{state.view.yaw=-Math.PI/4;state.view.pitch=-Math.atan(1/Math.sqrt(2))}
+  markInteractiveMotion();updateCameraControls();requestRender();scheduleSave();setStatus(preset==='top'?'Top Down orthographic camera applied.':'Isometric orthographic camera applied.')
+}
+function cameraDisplayName(){return state.view.cameraPreset==='top'?'Top Down':state.view.cameraPreset==='isometric'?'Isometric':state.view.cameraMode==='fly'?'Free Fly':'Orbit'}
+function updateCameraControls(){const yaw=angleDegrees(state.view.yaw),pitch=angleDegrees(state.view.pitch),roll=angleDegrees(state.view.roll),camera=Scene.cameraForView(state.view,state.world,Math.max(1,canvas.clientWidth),Math.max(1,canvas.clientHeight)),name=cameraDisplayName();$('#yawRange').value=yaw;$('#pitchRange').value=pitch;$('#rollRange').value=roll;$('#zoomRange').value=Math.round(state.view.zoom*100);$('#yawValue').textContent=`${yaw}°`;$('#pitchValue').textContent=`${pitch}°`;$('#rollValue').textContent=`${roll}°`;$('#zoomValue').textContent=`${state.view.zoom.toFixed(2)}×`;$('#projectionStat').textContent=state.view.projection==='perspective'?'Perspective':'Orthographic';$('#cameraModeStat').textContent=name;$('#perspectiveBtn').classList.toggle('active',state.view.projection==='perspective');$('#orthoBtn').classList.toggle('active',state.view.projection==='orthographic');$('#cameraOrbitBtn').classList.toggle('active',state.view.cameraMode==='orbit'&&!['top','isometric'].includes(state.view.cameraPreset));$('#cameraFlyBtn').classList.toggle('active',state.view.cameraMode==='fly');$('#cameraTopBtn').classList.toggle('active',state.view.cameraPreset==='top');$('#cameraIsoBtn').classList.toggle('active',state.view.cameraPreset==='isometric');$('#cameraModeValue').textContent=name;$('#cameraPositionValue').textContent=camera.position.map(v=>v.toFixed(1)).join(', ');$('#flySpeedRange').value=Math.round(state.view.moveSpeed*10);$('#flySpeedValue').textContent=`${state.view.moveSpeed.toFixed(1)} units`;$('#fovRange').value=Math.round(state.view.fov);$('#fovValue').textContent=`${Math.round(state.view.fov)}°`;$('#zoomRange').disabled=state.view.cameraMode==='fly'&&state.view.projection==='perspective';$('#viewport').dataset.cameraMode=state.view.cameraMode}
+function resetCamera(){Object.assign(state.view,{yaw:-38*Math.PI/180,pitch:-28*Math.PI/180,roll:0,zoom:1,cameraMode:'orbit',cameraPreset:'orbit',targetX:0,targetY:0,targetZ:0,positionX:0,positionY:0,positionZ:0,fov:48,near:.15,far:state.world.n*6,moveSpeed:1,projection:'perspective'});rememberPerspectiveOrbit();markInteractiveMotion();updateCameraControls();requestRender();scheduleSave();setStatus('Camera position, orientation, focus, projection, and movement speed reset.')}
+function focusSelection(){if(!state.selection)return;const i=idx(state.selection.x,state.selection.y),point=Scene.gridToWorld(state.world,state.generation,state.selection.x,state.selection.y,state.world.height[i],state.scene);Scene.lookAt(state.view,state.world,point);state.view.cameraPreset='custom';markInteractiveMotion();updateCameraControls();requestRender();scheduleSave();setStatus(`${state.view.cameraMode==='fly'?'Aimed at':'Centered orbit on'} ${state.selection.x}, ${state.selection.y}.`)}
+function setRenderMode(mode){if(!Ascii.RENDER_MODES.includes(mode))return;state.view.renderMode=mode;updateRenderControls();requestRender();scheduleSave();setStatus(`${mode[0].toUpperCase()+mode.slice(1)} ASCII rendering active.`)}
+function updateRenderControls(){
+ const v=state.view,name=v.renderMode[0].toUpperCase()+v.renderMode.slice(1),ev=Number(v.exposure)||0;
+ $('#renderModeValue').textContent=name;$('#renderModeStat').textContent=`${name} ASCII`;
+ $('#renderShadedBtn').classList.toggle('active',v.renderMode==='shaded');$('#renderSemanticBtn').classList.toggle('active',v.renderMode==='semantic');$('#renderHybridBtn').classList.toggle('active',v.renderMode==='hybrid');
+ $('#glyphSet').value=v.glyphSet;$('#colorModeSelect').value=v.colorMode;$('#paletteSelect').value=v.palette;$('#backgroundColor').value=v.background;$('#foregroundColor').value=v.foreground;
+ $('#autoResolutionToggle').checked=v.autoResolution!==false;$('#adaptiveResolutionToggle').checked=v.adaptiveResolution!==false;$('#outputColumnsRange').disabled=v.autoResolution!==false;$('#outputColumnsRange').value=Math.round(v.outputColumns);$('#outputColumnsValue').textContent=v.autoResolution!==false?`Auto · ${Math.round(v.outputColumns)} target`:String(Math.round(v.outputColumns));
+ $('#detailRange').value=Math.round(v.detail*100);$('#detailValue').textContent=`${Math.round(v.detail*100)}%`;$('#contrastRange').value=Math.round(v.contrast*100);$('#contrastValue').textContent=`${Math.round(v.contrast*100)}%`;
+ $('#exposureRange').value=Math.round(ev*100);$('#exposureValue').textContent=`${ev>0?'+':''}${ev.toFixed(1)} EV`;
+ $('#edgeStrengthRange').value=Math.round(v.edgeStrength*100);$('#edgeStrengthValue').textContent=`${Math.round(v.edgeStrength*100)}%`;$('#depthFadeRange').value=Math.round(v.depthFade*100);$('#depthFadeValue').textContent=`${Math.round(v.depthFade*100)}%`;
+ $('#captureResolutionSelect').value=String(Number(v.captureColumns)===0?0:(Number(v.captureColumns)||160));if(!state.asciiFrame)$('#asciiResolutionValue').textContent=v.autoResolution!==false?'Auto':`${v.outputColumns} columns`
+}
+
+canvas.addEventListener('pointerdown',e=>{if(state.tool.mode!=='orbit'&&e.button!==0)return;if(e.button>2)return;e.preventDefault();canvas.setPointerCapture(e.pointerId);const p=raycastClient(e.clientX,e.clientY);drag={id:e.pointerId,button:e.button,lastX:e.clientX,lastY:e.clientY,moved:false,shift:e.shiftKey,alt:e.altKey,lastCell:null};$('#viewport').classList.add('dragging');if(state.tool.mode==='orbit'){state.view.cameraPreset='custom';markInteractiveMotion()}if((state.tool.mode==='sculpt'||state.tool.mode==='paint')&&p){beginStroke();applyBrushAt(p.gridX,p.gridY);drag.lastCell=`${p.cellX},${p.cellY}`}else if(state.tool.mode==='inspect'&&p)selectCell(p.cellX,p.cellY,e.clientX,e.clientY)});
+canvas.addEventListener('pointermove',e=>{if(!drag||drag.id!==e.pointerId)return;const dx=e.clientX-drag.lastX,dy=e.clientY-drag.lastY;drag.lastX=e.clientX;drag.lastY=e.clientY;if(Math.hypot(dx,dy)>1)drag.moved=true;if(state.tool.mode==='orbit'){state.view.cameraPreset='custom';markInteractiveMotion();const pan=drag.button===1||drag.shift||e.shiftKey,roll=drag.button===2||drag.alt||e.altKey;if(pan){if(state.view.cameraMode==='fly')Scene.flyPan(state.view,state.world,dx,dy,canvas.clientHeight);else Scene.orbitPan(state.view,state.world,dx,dy,canvas.clientHeight)}else if(roll)state.view.roll=normalizeAngle(state.view.roll+dx*.009);else{state.view.yaw=normalizeAngle(state.view.yaw+dx*.009);state.view.pitch=normalizeAngle(state.view.pitch-dy*.009)}updateCameraControls();requestRender()}else if(state.tool.mode==='inspect'){const p=raycastClient(e.clientX,e.clientY);if(p)selectCell(p.cellX,p.cellY,e.clientX,e.clientY)}else{const p=raycastClient(e.clientX,e.clientY);if(p&&`${p.cellX},${p.cellY}`!==drag.lastCell){applyBrushAt(p.gridX,p.gridY);drag.lastCell=`${p.cellX},${p.cellY}`}}});
+function endPointer(e){if(!drag||drag.id!==e.pointerId)return;finishStroke();drag=null;$('#viewport').classList.remove('dragging');scheduleSave()}
+canvas.addEventListener('pointerup',endPointer);canvas.addEventListener('pointercancel',endPointer);canvas.addEventListener('contextmenu',e=>e.preventDefault());
+canvas.addEventListener('wheel',e=>{e.preventDefault();state.view.cameraPreset='custom';markInteractiveMotion();if(state.view.cameraMode==='fly'){state.view.moveSpeed=clamp(state.view.moveSpeed*Math.exp(-e.deltaY*.0012),.1,8);setStatus(`Free Fly movement speed ${state.view.moveSpeed.toFixed(1)} units.`)}else state.view.zoom=clamp(state.view.zoom*Math.exp(-e.deltaY*.0012),.35,2.6);updateCameraControls();requestRender();scheduleSave()},{passive:false});
+canvas.addEventListener('dblclick',e=>{const p=raycastClient(e.clientX,e.clientY);if(p){selectCell(p.cellX,p.cellY,e.clientX,e.clientY);focusSelection()}});
+
+function updateSelectionUI(){const empty=$('#selectionEmpty'),details=$('#selectionDetails'),call=$('#selectionCallout');if(!state.selection||state.world.isBlank){empty.hidden=false;details.hidden=true;call.classList.remove('visible');$('#cellStatus').textContent='No cell selected';return}const{x,y}=state.selection,i=idx(x,y),w=state.world;empty.hidden=true;details.hidden=false;$('#selCoord').textContent=`${x}, ${y}`;$('#selBiome').textContent=BIOMES[w.biome[i]]?.name||'Unknown';$('#selElevation').textContent=`${Math.round(w.height[i]*100)}%`;$('#selWater').textContent=`${Math.round(w.water[i]*100)}%`;$('#selMoisture').textContent=`${Math.round(w.moisture[i]*100)}%`;$('#selVegetation').textContent=`${Math.round(w.vegetation[i]*100)}%`;$('#cellStatus').textContent=`${x}, ${y} · ${BIOMES[w.biome[i]]?.name||'Unknown'} · elevation ${Math.round(w.height[i]*100)}%`}
+function updateMetrics(){const w=state.world,day=Math.floor(w.day),seasonIndex=Math.floor(day/90)%4,blank=w.isBlank;$('#dayMetric').textContent=day.toLocaleString();$('#seasonMetric').textContent=SEASONS[seasonIndex];$('#weatherMetric').textContent=w.weather;$('#agentMetric').textContent=w.agents.length.toLocaleString();$('#seasonProgress').style.width=`${mod(day,90)/90*100}%`;$('#playBtn').innerHTML=state.sim.playing?'❚❚ Pause':'▶ Play';$('#playBtn').classList.toggle('primary',!state.sim.playing);$('#playBtn').disabled=blank;$('#stepBtn').disabled=blank;$('#resetSimulationBtn').disabled=blank;$('#stopSimulationBtn').disabled=!state.sim.playing;$('#applyEventBtn').disabled=blank}
+function updateEmptyState(){const blank=state.world.isBlank;$('#emptyState').hidden=!blank;$('#sampleFlag').hidden=!state.project.isSample||blank;$('#freshStartBtn').disabled=blank;$('#clearLogBtn').disabled=!state.eventLog.length}
+function updateLayers(){for(const key of Object.keys(state.view.layers)){const el=$(`#layer${key[0].toUpperCase()+key.slice(1)}`);if(el)el.checked=state.view.layers[key]}}
+function updateAllUI(){updateMetrics();updateSelectionUI();updateEmptyState();updateCameraControls();updateRenderControls();updateLayers();renderLog();updateHistoryButtons();$('#projectName').value=state.project.name;$('#worldStat').textContent=`${state.world.n} × ${state.world.n}`;$('#sampleFlag').hidden=!state.project.isSample||state.world.isBlank}
+function syncControlsFromState(){const g=state.generation,t=state.tool;$('#projectName').value=state.project.name;$('#seedInput').value=g.seed;$('#resolutionSelect').value=String(g.resolution);$('#presetSelect').value=g.preset;$('#climateSelect').value=g.climate;$('#settlementSelect').value=String(g.settlements);$('#seaLevel').value=Math.round(g.seaLevel*100);$('#roughness').value=Math.round(g.roughness*100);$('#seaValue').textContent=`${Math.round(g.seaLevel*100)}%`;$('#roughValue').textContent=`${Math.round(g.roughness*100)}%`;$('#speedRange').value=state.sim.speed;$('#speedValue').textContent=`${state.sim.speed}×`;$('#sculptAction').value=t.sculptAction;$('#brushRadius').value=t.radius;$('#radiusValue').textContent=t.radius;$('#brushStrength').value=Math.round(t.strength*100);$('#strengthValue').textContent=`${Math.round(t.strength*100)}%`;$('#paintLayer').value=t.paintLayer;$('#paintValue').value=Math.round(t.paintValue*100);$('#paintValueLabel').textContent=`${Math.round(t.paintValue*100)}%`;$('#paintRadius').value=t.paintRadius;$('#paintRadiusValue').textContent=t.paintRadius;setMode(t.mode);updateCameraControls();updateRenderControls();updateLayers()}
+function hasMeaningfulWork(){return !state.world.isBlank||state.eventLog.length>0||state.history.length>0||state.project.isSample===true}
+function currentRecoveryRecord(){try{return hasMeaningfulWork()?makeRecord({touch:false}):null}catch{return null}}
+function downloadRecoveryData(data,name='glyphscape-recovery'){const raw=typeof data==='string'?data:JSON.stringify(data,null,2);downloadBlob(new Blob([raw],{type:'application/json;charset=utf-8'}),`${safeName(name)}.glyphscape.recovery.json`)}
+function requestSafety({title='Confirm action',message='',actionLabel='Continue',recoveryData=null,recoveryName='glyphscape-recovery'}={}){return new Promise(resolve=>{const dialog=$('#safetyDialog');if(dialog.open)dialog.close();state.safetyResolver={resolve,recoveryData,recoveryName};$('#safetyTitle').textContent=title;$('#safetyMessage').textContent=message;$('#safetyConfirmBtn').textContent=actionLabel;const wrap=$('#safetyRecoveryWrap');wrap.hidden=!recoveryData;$('#safetyRecovery').checked=!!recoveryData;dialog.showModal();setTimeout(()=>$('#safetyCancelBtn').focus(),0)})}
+function settleSafety(confirmed){const pending=state.safetyResolver;if(!pending)return;state.safetyResolver=null;if(confirmed&&pending.recoveryData&&$('#safetyRecovery').checked)downloadRecoveryData(pending.recoveryData,pending.recoveryName);if($('#safetyDialog').open)$('#safetyDialog').close();pending.resolve(confirmed)}
+async function confirmReplacement(title,message,actionLabel){if(!hasMeaningfulWork())return true;return requestSafety({title,message,actionLabel,recoveryData:currentRecoveryRecord(),recoveryName:`${state.project.name}-before-${actionLabel}`})}
+function showRecoveryDialog(){const candidate=state.recoveryCandidate;if(!candidate)return;$('#recoverySummary').textContent=`${candidate.source} could not be opened safely. ${candidate.error}`;$('#recoveryTechnical').textContent=JSON.stringify({application:`GLYPHSCAPE v${VERSION}`,schema:SCHEMA_VERSION,source:candidate.source,error:candidate.error,detectedAt:candidate.at,lastStorageError:state.lastStorageError},null,2);const dialog=$('#recoveryDialog');if(!dialog.open)dialog.showModal()}
+function copyRecoveryDetails(){const text=$('#recoveryTechnical').textContent||'';if(navigator.clipboard?.writeText)navigator.clipboard.writeText(text).then(()=>toast('Copied','Recovery details copied.')).catch(()=>fallbackCopy(text));else fallbackCopy(text)}
+function fallbackCopy(text){const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast('Copied','Recovery details copied.')}catch{toast('Copy failed','Select the technical details and copy them manually.','warn')}ta.remove()}
+function continueRecoverySession(){if($('#recoveryDialog').open)$('#recoveryDialog').close();state.recoveryHold=true;setAutosave('recovery','Recovery needed');setStatus('Temporary session active. The damaged stored copy remains untouched until you explicitly replace or delete it.');toast('Session-only recovery','Export current work before closing this tab.','warn',7000)}
+async function replaceDamagedActive(){const candidate=state.recoveryCandidate;if(!candidate)return;downloadRecoveryData(candidate.raw,'glyphscape-damaged-active-backup');if(!confirm('A recovery copy was downloaded. Replace the damaged active project with a blank project now?'))return;for(const key of [ACTIVE_KEY,...LEGACY_ACTIVE_KEYS])storageRemove(key);state.recoveryCandidate=null;state.recoveryHold=false;initializeBlankProject({newIdentity:true,resetGeneration:true,resetCamera:true});await saveActive({force:true});if($('#recoveryDialog').open)$('#recoveryDialog').close();setStatus('Damaged active data was backed up and replaced with a blank project.');toast('Recovery completed','The damaged data was backed up before replacement.')}
+function downloadRecoveryCandidate(){if(state.recoveryCandidate)downloadRecoveryData(state.recoveryCandidate.raw,'glyphscape-recoverable-data')}
+
+function defaultGeneration(){return{seed:`world-${Math.floor(Math.random()*999999)}`,preset:'highlands',resolution:64,seaLevel:.34,roughness:.58,climate:'temperate',settlements:4}}
+function resetVisualDefaults(){Object.assign(state.view,{renderMode:'hybrid',glyphSet:'classic',palette:'natural',autoResolution:true,outputColumns:108,captureColumns:160,adaptiveResolution:true,contrast:1.1,exposure:0,edgeStrength:.55,depthFade:.22,colorMode:'material',foreground:'#dce8dd',background:'#060807',detail:1})}
+function initializeBlankProject({newIdentity=false,resetGeneration=false,resetCamera=false}={}){if(resetGeneration)state.generation=defaultGeneration();if(newIdentity)state.project={id:uid(),name:'Untitled World',createdAt:nowISO(),updatedAt:nowISO(),schemaVersion:SCHEMA_VERSION,isSample:false};else state.project={...state.project,isSample:false,schemaVersion:SCHEMA_VERSION};if(resetCamera)Object.assign(state.view,{yaw:-38*Math.PI/180,pitch:-28*Math.PI/180,roll:0,zoom:1,cameraMode:'orbit',cameraPreset:'orbit',targetX:0,targetY:0,targetZ:0,positionX:0,positionY:0,positionZ:0,fov:48,near:.15,far:state.generation.resolution*6,moveSpeed:1,projection:'perspective'});state.world=blankWorld(state.generation.resolution);state.sceneFrame=null;state.asciiFrame=null;state.lastAscii='';state.simulationBaseline=deserializeWorld(serializeWorld(state.world));state.baselineEventLog=[];state.selection=null;state.eventLog=[];state.sim.playing=false;state.sim.accumulator=0;state.history=[];state.future=[];syncControlsFromState();updateAllUI();requestRender()}
+
+async function clearCurrentWorld(){const ok=await requestSafety({title:'Clear current world',message:'This removes terrain, structures, agents, simulation state, event history, and undo history while keeping the current project identity and generation settings.',actionLabel:'Clear world',recoveryData:currentRecoveryRecord(),recoveryName:`${state.project.name}-before-clear`});if(!ok)return false;initializeBlankProject();scheduleSave();setStatus('Current project is now blank.');toast('World cleared','Project identity and generation controls were retained.');return true}
+async function freshStart(){return clearCurrentWorld()}
+async function newProject(){const ok=await confirmReplacement('Create new project','This starts a separate blank project with new identity, seed, neutral render settings, default generation controls, and reset camera.','Create new project');if(!ok)return;resetVisualDefaults();initializeBlankProject({newIdentity:true,resetGeneration:true,resetCamera:true});scheduleSave();setStatus('New blank project ready.');toast('New project','Choose settings and generate a world, or intentionally load the demonstration.')}
+async function loadDemoWorld(){const ok=await confirmReplacement('Load demonstration','The editable Highland Reach demonstration will replace the current in-memory project and become a separate project.','Load demo');if(!ok)return;state.project={id:uid(),name:'Highland Reach — Demo',createdAt:nowISO(),updatedAt:nowISO(),schemaVersion:SCHEMA_VERSION,isSample:true};state.generation={seed:'green-shoe',preset:'highlands',resolution:64,seaLevel:.34,roughness:.58,climate:'temperate',settlements:4};resetVisualDefaults();Object.assign(state.view,{yaw:-38*Math.PI/180,pitch:-28*Math.PI/180,roll:0,zoom:1,cameraMode:'orbit',cameraPreset:'orbit',targetX:0,targetY:0,targetZ:0,positionX:0,positionY:0,positionZ:0,fov:48,near:.15,far:384,moveSpeed:1,projection:'perspective'});state.world=blankWorld(64);state.sceneFrame=null;state.asciiFrame=null;state.lastAscii='';state.selection=null;state.eventLog=[];state.history=[];state.future=[];generateWorld({sample:true,recordHistory:false});state.history=[];state.future=[];updateHistoryButtons();logEvent('Loaded the editable Highland Reach demonstration.');state.simulationBaseline=deserializeWorld(serializeWorld(state.world));state.baselineEventLog=state.eventLog.slice(0,500);setStatus('Demonstration world ready.');toast('Demo loaded','Highland Reach is fully editable and removable.')}
+
+function resetSimulation(){if(state.world.isBlank||!state.simulationBaseline){toast('Nothing to reset','Generate or import a world first.','warn');return}pushHistory('simulation reset');state.world=deserializeWorld(serializeWorld(state.simulationBaseline));state.eventLog=state.baselineEventLog.slice(0,500);state.sim.playing=false;state.sim.accumulator=0;state.selection=null;updateAllUI();requestRender();scheduleSave();setStatus('Simulation restored to its baseline.');toast('Simulation reset','Project settings and camera were preserved.')}
+function stopSimulation(){state.sim.playing=false;state.sim.accumulator=0;updateMetrics();scheduleSave();setStatus('Simulation stopped without resetting the world.')}
+function randomizeSeed(){$('#seedInput').value=`${['copper','moss','anvil','river','signal','lantern','forge','cedar'][Math.floor(Math.random()*8)]}-${Math.floor(1000+Math.random()*9000)}`;state.generation.seed=$('#seedInput').value;setStatus('Random seed selected. Generate World to apply it; terrain parameters are unchanged.');scheduleSave()}
+
+function currentAscii(){const bundle=captureBundle();return bundle?.ascii?.text||''}
+function exportProject(){try{const record=makeRecord({touch:false});downloadBlob(new Blob([JSON.stringify(record,null,2)],{type:'application/json;charset=utf-8'}),`${safeName(state.project.name)}.glyphscape.json`);setStatus('Project exported as JavaScript Object Notation (JSON).');toast('Project exported','The complete validated editable world was downloaded locally.')}catch(error){toast('Project export failed',error.message,'error',6000)}}
+async function importProjectFile(file){try{if(!file)throw new Error('No project file was selected.');if(file.size>MAX_IMPORT_BYTES)throw new Error(`The selected file is ${(file.size/1024/1024).toFixed(1)} megabytes; the import limit is ${MAX_IMPORT_BYTES/1024/1024} megabytes.`);if(state.recoveryHold){showRecoveryDialog();throw new Error('Resolve or continue the stored-data recovery before importing another project.')}const text=await file.text();let parsed;try{parsed=JSON.parse(text)}catch(error){throw new Error(`JavaScript Object Notation (JSON) parsing failed: ${error.message}`)}const record=migrateRecord(parsed);const ok=await confirmReplacement('Import project',`Import “${record.project.name}” and replace the current in-memory project? The imported project identity, world, camera, simulation time, event log, and metadata will be preserved.`,'Import project');if(!ok)return;applyRecord(record);await saveActive();setStatus(`Imported ${record.project.name} from ${file.name}.`);toast('Project imported',`${file.name} passed schema migration, integrity, and typed-array validation.`)}catch(error){toast('Import failed',`${error.message} The current project was left unchanged.`,'error',8000)}finally{$('#importFile').value=''}}
+function exportText(){const text=currentAscii();if(!text){toast('Nothing to export','Generate a world before exporting a text frame.','warn');return}const header=`GLYPHSCAPE v${VERSION}\n${state.project.name}\nSeed: ${state.generation.seed} · Day: ${Math.floor(state.world.day)} · Weather: ${state.world.weather} · ${state.view.renderMode} ASCII\n\n`;downloadBlob(new Blob([header+text+'\n'],{type:'text/plain;charset=utf-8'}),`${safeName(state.project.name)}-${state.view.renderMode}-day-${Math.floor(state.world.day)}.txt`);setStatus('Current ASCII frame exported as plain text.')}
+function svgColorRuns(ascii,row,fontWidth,lineHeight,yOffset){let out='',start=0,last=ascii.colors[row*ascii.cols]||state.view.foreground,text='';const flush=()=>{if(!text)return;out+=`<text x="${14+start*fontWidth}" y="${yOffset+row*lineHeight}" fill="${escapeHtml(last)}" xml:space="preserve">${escapeHtml(text)}</text>`;text=''};for(let col=0;col<ascii.cols;col++){const i=row*ascii.cols+col,color=ascii.colors[i]||state.view.foreground,char=ascii.chars[i]||' ';if(color!==last){flush();start=col;last=color}text+=char}flush();return out}
+function exportSvg(){const bundle=captureBundle();if(!bundle){toast('Nothing to export','Generate a world before exporting a Scalable Vector Graphics (SVG) frame.','warn');return}const ascii=bundle.ascii,font=12,line=14,fontWidth=7.25,width=ascii.cols*fontWidth+28,height=ascii.rows*line+54,body=Array.from({length:ascii.rows},(_,row)=>svgColorRuns(ascii,row,fontWidth,line,42)).join(''),svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="100%" height="100%" fill="${escapeHtml(ascii.background)}"/><text x="14" y="20" fill="${escapeHtml(state.view.foreground)}" font-family="monospace" font-size="11" font-weight="700">${escapeHtml(state.project.name)} · GLYPHSCAPE v${VERSION} · ${state.view.renderMode} · Day ${Math.floor(state.world.day)}</text><g font-family="monospace" font-size="${font}" font-weight="700">${body}</g></svg>`;downloadBlob(new Blob([svg],{type:'image/svg+xml;charset=utf-8'}),`${safeName(state.project.name)}-${state.view.renderMode}-day-${Math.floor(state.world.day)}.svg`);setStatus('Color-preserving ASCII frame exported as Scalable Vector Graphics (SVG).')}
+function exportPng(){const capture=captureCanvas();if(!capture){toast('Nothing to capture','Generate a world before capturing an image.','warn');return}capture.canvas.toBlob(blob=>{if(!blob){toast('Image capture failed','The browser did not return image data.','error');return}downloadBlob(blob,`${safeName(state.project.name)}-${state.view.renderMode}-day-${Math.floor(state.world.day)}.png`);setStatus(`ASCII artwork captured as Portable Network Graphics (PNG) at ${capture.ascii.cols} × ${capture.ascii.rows} characters.`)},'image/png')}
+function standaloneRows(ascii){return Array.from({length:ascii.rows},(_,row)=>{let html='',last='',run='';const flush=()=>{if(!run)return;html+=`<span style="color:${escapeHtml(last)}">${escapeHtml(run)}</span>`;run=''};for(let col=0;col<ascii.cols;col++){const i=row*ascii.cols+col,color=ascii.colors[i]||state.view.foreground;if(color!==last){flush();last=color}run+=ascii.chars[i]||' '}flush();return html}).join('\n')}
+function exportStandalone(){const bundle=captureBundle();if(!bundle){toast('Nothing to export','Generate a world before creating a standalone artifact.','warn');return}const ascii=bundle.ascii,meta={project:state.project.name,seed:state.generation.seed,day:Math.floor(state.world.day),weather:state.world.weather,renderMode:state.view.renderMode,resolution:[ascii.cols,ascii.rows],generated:nowISO(),source:`GLYPHSCAPE v${VERSION}`},html=`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(state.project.name)} — GLYPHSCAPE Capture</title><style>body{margin:0;min-height:100vh;background:${escapeHtml(ascii.background)};color:${escapeHtml(state.view.foreground)};font-family:system-ui;padding:24px;box-sizing:border-box}main{max-width:max-content;margin:auto}h1{font-size:18px;letter-spacing:.08em;margin:0 0 6px}.meta{opacity:.7;font-size:12px;margin-bottom:18px}pre{margin:0;padding:16px;border:1px solid currentColor;border-radius:12px;background:${escapeHtml(ascii.background)};overflow:auto;font:700 12px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre}footer{font-size:11px;opacity:.65;margin-top:12px}</style></head><body><main><h1>${escapeHtml(state.project.name)}</h1><div class="meta">Seed ${escapeHtml(state.generation.seed)} · Day ${Math.floor(state.world.day)} · ${escapeHtml(state.world.weather)} · ${escapeHtml(state.view.renderMode)} ASCII · ${ascii.cols} × ${ascii.rows}</div><pre>${standaloneRows(ascii)}</pre><footer>Captured locally with GLYPHSCAPE v${VERSION}. This standalone artifact contains no tracking or network dependencies.</footer><script type="application/json" id="glyphscape-capture-metadata">${escapeHtml(JSON.stringify(meta))}<\/script></main></body></html>`;downloadBlob(new Blob([html],{type:'text/html;charset=utf-8'}),`${safeName(state.project.name)}-${state.view.renderMode}-capture.html`);setStatus('Standalone color ASCII HyperText Markup Language (HTML) capture exported.')}
+function showTextPreview(){const text=currentAscii();if(!text){toast('No text frame yet','Generate a world first.','warn');return}$('#asciiPreview').style.background=state.view.background;$('#asciiPreview').style.color=state.view.foreground;$('#asciiPreview').textContent=text;$('#textDialog').showModal()}
+async function copyText(){const text=currentAscii();if(!text){toast('Nothing to copy','Generate a world first.','warn');return}try{await navigator.clipboard.writeText(text);toast('Copied','The current ASCII frame is on the clipboard.')}catch{const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();toast('Copied','The current ASCII frame is on the clipboard.')}}
+
+function formatBytes(bytes){if(!Number.isFinite(bytes))return'unknown';const units=['B','KB','MB','GB'];let value=bytes,index=0;while(value>=1024&&index<units.length-1){value/=1024;index++}return`${value<10&&index?value.toFixed(1):Math.round(value)} ${units[index]}`}
+async function updateStorageSummary(){const el=$('#storageSummary');const chips=[];chips.push(`<span>${state.db?'Indexed Database ready':'Indexed Database unavailable'}</span>`);chips.push(`<span>${state.localStorageAvailable?'Local fallback ready':'Local fallback unavailable'}</span>`);chips.push(`<span>Schema v${SCHEMA_VERSION}</span>`);try{if(navigator.storage?.estimate){const estimate=await navigator.storage.estimate();chips.push(`<span>${formatBytes(estimate.usage)} used of ${formatBytes(estimate.quota)}</span>`)}}catch{}if(state.recoveryHold)chips.push('<span>Recovery hold active</span>');if(state.lastStorageError)chips.push(`<span>${escapeHtml(state.lastStorageError.message)}</span>`);el.innerHTML=chips.join('')}
+async function saveNamedProject(){if(state.recoveryHold){showRecoveryDialog();return}const saved=await saveActive();if(saved)toast('Project saved',state.db?'Stored in the local project library with an active-project fallback.':'Stored as the active local project.');else toast('Session copy updated','Persistent storage was unavailable. Export the project for a durable backup.','warn');await renderProjectList()}
+async function duplicateProjectRecord(raw){try{const record=migrateRecord(raw);record.project={...record.project,id:uid(),name:`${record.project.name} — Copy`.slice(0,80),createdAt:nowISO(),updatedAt:nowISO(),schemaVersion:SCHEMA_VERSION,isSample:false};record.version=VERSION;record.integrity={algorithm:'FNV-1A-32',worldHash:worldFingerprint(record.world)};const saved=await dbPut(record);toast('Project duplicated',saved?record.project.name:`${record.project.name} is available for this session only.`);await renderProjectList();return record}catch(error){toast('Duplicate failed',error.message,'error')}}
+async function duplicateCurrentProject(){if(state.recoveryHold){showRecoveryDialog();return}await duplicateProjectRecord(makeRecord({touch:false}))}
+async function renameProjectRecord(raw){try{const record=migrateRecord(raw),name=prompt('Rename local project:',record.project.name);if(name===null)return;const cleaned=name.trim().slice(0,80);if(!cleaned){toast('Rename cancelled','Project names cannot be empty.','warn');return}record.project.name=cleaned;record.project.updatedAt=nowISO();if(record.project.id===state.project.id){state.project.name=cleaned;$('#projectName').value=cleaned;await saveActive()}else await dbPut(record);toast('Project renamed',cleaned);await renderProjectList()}catch(error){toast('Rename failed',error.message,'error')}}
+async function openProjectRecord(raw){try{const record=migrateRecord(raw);if(record.project.id===state.project.id){$('#projectsDialog').close();return}const ok=await confirmReplacement('Open local project',`Open “${record.project.name}” and replace the current in-memory project?`,'Open project');if(!ok)return;applyRecord(record);await saveActive();$('#projectsDialog').close();toast('Project opened',record.project.name)}catch(error){toast('Project unavailable',error.message,'error')}}
+async function deleteProjectRecord(raw,{damaged=false}={}){const id=raw?.project?.id;if(!id){toast('Delete failed','The project does not contain a usable identifier.','error');return}let name=raw?.project?.name||'Damaged project',recoveryData=raw;try{const normalized=migrateRecord(raw);name=normalized.project.name;recoveryData=normalized}catch{}const ok=await requestSafety({title:damaged?'Delete damaged project':'Delete saved project',message:`Permanently remove “${name}” from this browser profile?`,actionLabel:'Delete project',recoveryData,recoveryName:`${name}-before-delete`});if(!ok)return;await dbDelete(id);if(id===state.project.id){for(const key of [ACTIVE_KEY,...LEGACY_ACTIVE_KEYS])storageRemove(key);initializeBlankProject({newIdentity:true,resetGeneration:true,resetCamera:true});setAutosave('ready','Ready');setStatus('The saved project was deleted. A new blank project is open but has not yet been saved.')}toast('Project deleted',name);await renderProjectList()}
+async function clearAllLocalData(){const recoveryData=state.recoveryCandidate?.raw||currentRecoveryRecord();const ok=await requestSafety({title:'Clear all local data',message:'This removes every GLYPHSCAPE project, the active-project fallback, local preferences, and session library entries from this browser profile. This cannot be undone inside the application.',actionLabel:'Clear all local data',recoveryData,recoveryName:'glyphscape-before-clear-all'});if(!ok)return;clearTimeout(state.saveTimer);for(const key of [ACTIVE_KEY,...LEGACY_ACTIVE_KEYS,SETTINGS_KEY])storageRemove(key);await dbClear();state.sessionStorage.clear();state.sessionProjects.clear();state.recoveryCandidate=null;state.recoveryHold=false;state.lastStorageError=null;initializeBlankProject({newIdentity:true,resetGeneration:true,resetCamera:true});setAutosave('ready','Local data cleared');setStatus('All GLYPHSCAPE local data was cleared. The blank project is not yet saved.');if($('#projectsDialog').open)$('#projectsDialog').close();toast('Local data cleared','A recovery copy was downloaded first when selected.')}
+async function renderProjectList(){const list=$('#projectList');list.innerHTML='<div class="hint">Reading local projects…</div>';await updateStorageSummary();const map=new Map();for(const raw of await dbList()){const id=raw?.project?.id;if(id)map.set(id,raw)}if(!state.recoveryHold){const current=makeRecord({touch:false});map.set(current.project.id,current)}let records=[...map.values()].sort((a,b)=>String(b?.project?.updatedAt||'').localeCompare(String(a?.project?.updatedAt||'')));if(!records.length){list.innerHTML='<div class="hint">No local projects have been saved.</div>';return}list.innerHTML='';for(const raw of records){let record=null,error=null;try{record=migrateRecord(raw)}catch(err){error=err}const row=document.createElement('article');row.className=`project-row${error?' damaged':''}`;if(error){const id=raw?.project?.id||'',name=raw?.project?.name||'Damaged project';row.innerHTML=`<div><h3>${escapeHtml(name)}</h3><p>Unreadable project · ${escapeHtml(error.message)}</p></div><div class="project-actions"><button class="small" data-action="backup">Back up raw</button><button class="small danger" data-action="delete">Delete</button></div>`;row.querySelector('[data-action="backup"]').addEventListener('click',()=>downloadRecoveryData(raw,`${name}-damaged`));row.querySelector('[data-action="delete"]').addEventListener('click',()=>deleteProjectRecord(raw,{damaged:true}));list.appendChild(row);continue}const current=record.project.id===state.project.id;row.innerHTML=`<div><h3>${escapeHtml(record.project.name)}${current?' · CURRENT':''}</h3><p>${escapeHtml(record.generation.preset)} · ${record.world.n} × ${record.world.n} · schema v${record.schemaVersion} · updated ${escapeHtml(formatDate(record.project.updatedAt))}</p></div><div class="project-actions"><button class="small" data-action="open" ${current?'disabled':''}>${current?'Current':'Open'}</button><button class="small" data-action="rename">Rename</button><button class="small" data-action="duplicate">Duplicate</button><button class="small danger" data-action="delete">Delete</button></div>`;row.querySelector('[data-action="open"]').addEventListener('click',()=>openProjectRecord(record));row.querySelector('[data-action="rename"]').addEventListener('click',()=>renameProjectRecord(record));row.querySelector('[data-action="duplicate"]').addEventListener('click',()=>duplicateProjectRecord(record));row.querySelector('[data-action="delete"]').addEventListener('click',()=>deleteProjectRecord(record));list.appendChild(row)}}
+async function openProjects(){await renderProjectList();$('#projectsDialog').showModal()}
+
+function togglePanel(side,force){const key=side==='left'?'leftOpen':'rightOpen';state.ui[key]=typeof force==='boolean'?force:!state.ui[key];applyPanelState();scheduleSave()}
+function applyPanelState(){const shell=$('#shell');shell.classList.toggle('left-collapsed',!state.ui.leftOpen);shell.classList.toggle('right-collapsed',!state.ui.rightOpen);$('#toggleLeft').textContent=state.ui.leftOpen?'◀':'▶';$('#toggleRight').textContent=state.ui.rightOpen?'▶':'◀';setTimeout(requestRender,210)}
+function setTheme(theme){state.ui.theme=theme;document.documentElement.dataset.theme=theme;$('#themeBtn').textContent=theme==='dark'?'☀':'☾';requestRender();scheduleSave()}
+
+function bindRange(id,handler,event='input'){$(id).addEventListener(event,e=>handler(e.target.value,e))}
+function bindControls(){
+ $('#newBtn').addEventListener('click',newProject);$('#projectsBtn').addEventListener('click',openProjects);$('#undoBtn').addEventListener('click',undo);$('#redoBtn').addEventListener('click',redo);$('#themeBtn').addEventListener('click',()=>setTheme(state.ui.theme==='dark'?'light':'dark'));$('#helpBtn').addEventListener('click',()=>$('#helpDialog').showModal());
+ $('#toggleLeft').addEventListener('click',()=>togglePanel('left'));$('#closeLeft').addEventListener('click',()=>togglePanel('left',false));$('#toggleRight').addEventListener('click',()=>togglePanel('right'));$('#closeRight').addEventListener('click',()=>togglePanel('right',false));
+ $('#projectName').addEventListener('input',e=>{state.project.name=e.target.value||'Untitled World';scheduleSave()});$('#seedInput').addEventListener('input',e=>{state.generation.seed=e.target.value;scheduleSave()});$('#resolutionSelect').addEventListener('change',e=>{state.generation.resolution=Number(e.target.value);scheduleSave()});$('#presetSelect').addEventListener('change',e=>{state.generation.preset=e.target.value;scheduleSave()});$('#climateSelect').addEventListener('change',e=>{state.generation.climate=e.target.value;scheduleSave()});$('#settlementSelect').addEventListener('change',e=>{state.generation.settlements=Number(e.target.value);scheduleSave()});
+ bindRange('#seaLevel',v=>{state.generation.seaLevel=Number(v)/100;$('#seaValue').textContent=`${v}%`;scheduleSave()});bindRange('#roughness',v=>{state.generation.roughness=Number(v)/100;$('#roughValue').textContent=`${v}%`;scheduleSave()});$('#generateBtn').addEventListener('click',()=>generateWorld());$('#emptyGenerateBtn').addEventListener('click',()=>generateWorld());$('#loadDemoBtn').addEventListener('click',loadDemoWorld);$('#emptyDemoBtn').addEventListener('click',loadDemoWorld);$('#randomSeedBtn').addEventListener('click',randomizeSeed);$('#freshStartBtn').addEventListener('click',()=>freshStart());$('#sampleFlag').addEventListener('click',()=>freshStart());
+ $('#playBtn').addEventListener('click',()=>{if(state.world.isBlank){toast('Generate a world first','Simulation needs an active world.','warn');return}state.sim.playing=!state.sim.playing;state.sim.last=performance.now();updateMetrics();setStatus(state.sim.playing?'Simulation running.':'Simulation paused.');scheduleSave()});$('#stepBtn').addEventListener('click',()=>{if(state.world.isBlank){toast('Generate a world first','Simulation needs an active world.','warn');return}simulationStep(1);setStatus('Advanced one simulation day.')});$('#resetSimulationBtn').addEventListener('click',resetSimulation);$('#stopSimulationBtn').addEventListener('click',stopSimulation);bindRange('#speedRange',v=>{state.sim.speed=Number(v);$('#speedValue').textContent=`${v}×`;scheduleSave()});$('#applyEventBtn').addEventListener('click',()=>applyEvent($('#eventSelect').value));$('#clearLogBtn').addEventListener('click',()=>{state.eventLog=[];if(state.world.day===0&&!state.sim.playing)state.baselineEventLog=[];renderLog();scheduleSave()});
+ $$('.mode-btn').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));$('#cameraOrbitBtn').addEventListener('click',()=>applyCameraPreset('orbit'));$('#cameraFlyBtn').addEventListener('click',()=>applyCameraPreset('fly'));$('#cameraTopBtn').addEventListener('click',()=>applyCameraPreset('top'));$('#cameraIsoBtn').addEventListener('click',()=>applyCameraPreset('isometric'));$('#perspectiveBtn').addEventListener('click',()=>{state.view.projection='perspective';state.view.cameraPreset='custom';rememberPerspectiveOrbit();markInteractiveMotion();updateCameraControls();requestRender();scheduleSave()});$('#orthoBtn').addEventListener('click',()=>{state.view.projection='orthographic';state.view.cameraPreset='custom';markInteractiveMotion();updateCameraControls();requestRender();scheduleSave()});$('#resetCameraBtn').addEventListener('click',resetCamera);$('#frameWorldBtn').addEventListener('click',()=>{frameWorld({restoreOrientation:true});scheduleSave();setStatus('World centered and fitted in perspective Orbit.');});$('#focusSelectionBtn').addEventListener('click',focusSelection);
+ $('#renderShadedBtn').addEventListener('click',()=>setRenderMode('shaded'));$('#renderSemanticBtn').addEventListener('click',()=>setRenderMode('semantic'));$('#renderHybridBtn').addEventListener('click',()=>setRenderMode('hybrid'));$('#glyphSet').addEventListener('change',e=>{state.view.glyphSet=e.target.value;requestRender();scheduleSave()});$('#colorModeSelect').addEventListener('change',e=>{state.view.colorMode=e.target.value;requestRender();scheduleSave()});$('#paletteSelect').addEventListener('change',e=>{state.view.palette=e.target.value;requestRender();scheduleSave()});$('#backgroundColor').addEventListener('input',e=>{state.view.background=e.target.value;requestRender();scheduleSave()});$('#foregroundColor').addEventListener('input',e=>{state.view.foreground=e.target.value;requestRender();scheduleSave()});$('#autoResolutionToggle').addEventListener('change',e=>{state.view.autoResolution=e.target.checked;updateRenderControls();requestRender();scheduleSave()});$('#adaptiveResolutionToggle').addEventListener('change',e=>{state.view.adaptiveResolution=e.target.checked;requestRender();scheduleSave()});bindRange('#outputColumnsRange',v=>{state.view.outputColumns=Number(v);$('#outputColumnsValue').textContent=v;requestRender();scheduleSave()});bindRange('#detailRange',v=>{state.view.detail=Number(v)/100;$('#detailValue').textContent=`${v}%`;requestRender();scheduleSave()});bindRange('#contrastRange',v=>{state.view.contrast=Number(v)/100;$('#contrastValue').textContent=`${v}%`;requestRender();scheduleSave()});bindRange('#exposureRange',v=>{state.view.exposure=Number(v)/100;const ev=state.view.exposure;$('#exposureValue').textContent=`${ev>0?'+':''}${ev.toFixed(1)} EV`;requestRender();scheduleSave()});bindRange('#edgeStrengthRange',v=>{state.view.edgeStrength=Number(v)/100;$('#edgeStrengthValue').textContent=`${v}%`;requestRender();scheduleSave()});bindRange('#depthFadeRange',v=>{state.view.depthFade=Number(v)/100;$('#depthFadeValue').textContent=`${v}%`;requestRender();scheduleSave()});$('#captureResolutionSelect').addEventListener('change',e=>{state.view.captureColumns=Number(e.target.value);scheduleSave()});
+ $('#textPreviewBtn').addEventListener('click',showTextPreview);$('#capturePngBtn').addEventListener('click',exportPng);$('#exportJsonBtn').addEventListener('click',exportProject);$('#importJsonBtn').addEventListener('click',()=>$('#importFile').click());$('#importFile').addEventListener('change',e=>importProjectFile(e.target.files[0]));$('#exportTextBtn').addEventListener('click',exportText);$('#exportSvgBtn').addEventListener('click',exportSvg);$('#exportPngBtn').addEventListener('click',exportPng);$('#exportHtmlBtn').addEventListener('click',exportStandalone);$('#copyTextBtn').addEventListener('click',copyText);$('#downloadTextDialogBtn').addEventListener('click',exportText);
+ $('#sculptAction').addEventListener('change',e=>{state.tool.sculptAction=e.target.value;scheduleSave()});bindRange('#brushRadius',v=>{state.tool.radius=Number(v);$('#radiusValue').textContent=v;scheduleSave()});bindRange('#brushStrength',v=>{state.tool.strength=Number(v)/100;$('#strengthValue').textContent=`${v}%`;scheduleSave()});$('#paintLayer').addEventListener('change',e=>{state.tool.paintLayer=e.target.value;scheduleSave()});bindRange('#paintValue',v=>{state.tool.paintValue=Number(v)/100;$('#paintValueLabel').textContent=`${v}%`;scheduleSave()});bindRange('#paintRadius',v=>{state.tool.paintRadius=Number(v);$('#paintRadiusValue').textContent=v;scheduleSave()});
+ bindRange('#yawRange',v=>{state.view.yaw=normalizeAngle(Number(v)*Math.PI/180);state.view.cameraPreset='custom';markInteractiveMotion();updateCameraControls();requestRender();scheduleSave()});bindRange('#pitchRange',v=>{state.view.pitch=normalizeAngle(Number(v)*Math.PI/180);state.view.cameraPreset='custom';markInteractiveMotion();updateCameraControls();requestRender();scheduleSave()});bindRange('#rollRange',v=>{state.view.roll=normalizeAngle(Number(v)*Math.PI/180);state.view.cameraPreset='custom';markInteractiveMotion();updateCameraControls();requestRender();scheduleSave()});bindRange('#zoomRange',v=>{state.view.zoom=Number(v)/100;state.view.cameraPreset='custom';markInteractiveMotion();updateCameraControls();requestRender();scheduleSave()});bindRange('#flySpeedRange',v=>{state.view.moveSpeed=Number(v)/10;updateCameraControls();scheduleSave()});bindRange('#fovRange',v=>{state.view.fov=Number(v);state.view.cameraPreset='custom';markInteractiveMotion();updateCameraControls();requestRender();scheduleSave()});
+ Object.keys(state.view.layers).forEach(key=>{const el=$(`#layer${key[0].toUpperCase()+key.slice(1)}`);if(el)el.addEventListener('change',e=>{state.view.layers[key]=e.target.checked;requestRender();scheduleSave()})});
+ $$('[data-close-dialog]').forEach(b=>b.addEventListener('click',()=>document.getElementById(b.dataset.closeDialog).close()));$$('dialog').forEach(d=>d.addEventListener('click',e=>{if(e.target===d&&!['safetyDialog','recoveryDialog'].includes(d.id)){const r=d.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)d.close()}}));$('#saveProjectBtn').addEventListener('click',saveNamedProject);$('#duplicateCurrentBtn').addEventListener('click',duplicateCurrentProject);$('#clearAllDataBtn').addEventListener('click',clearAllLocalData);$('#safetyCancelBtn').addEventListener('click',()=>settleSafety(false));$('#safetyCloseBtn').addEventListener('click',()=>settleSafety(false));$('#safetyConfirmBtn').addEventListener('click',()=>settleSafety(true));$('#safetyDialog').addEventListener('cancel',e=>{e.preventDefault();settleSafety(false)});$('#downloadRecoveryBtn').addEventListener('click',downloadRecoveryCandidate);$('#retryRecoveryBtn').addEventListener('click',()=>location.reload());$('#continueSessionBtn').addEventListener('click',continueRecoverySession);$('#replaceDamagedBtn').addEventListener('click',replaceDamagedActive);$('#copyRecoveryDetailsBtn').addEventListener('click',copyRecoveryDetails);
+ window.addEventListener('resize',()=>{if(innerWidth<=860){state.ui.leftOpen=false;state.ui.rightOpen=false;applyPanelState()}markInteractiveMotion(180);requestRender()});window.addEventListener('beforeunload',()=>{try{const json=JSON.stringify(makeRecord({touch:false}));state.sessionStorage.set(ACTIVE_KEY,json);if(!state.recoveryHold)storageSet(ACTIVE_KEY,json)}catch{}});
+ document.addEventListener('keydown',e=>{const tag=document.activeElement?.tagName;if(['INPUT','SELECT','TEXTAREA'].includes(tag))return;const meta=e.ctrlKey||e.metaKey,key=e.key.toLowerCase();if(meta&&key==='s'){e.preventDefault();saveNamedProject();return}if(meta&&key==='z'){e.preventDefault();e.shiftKey?redo():undo();return}if(meta&&key==='y'){e.preventDefault();redo();return}if(e.key==='Escape'){const open=[...document.querySelectorAll('dialog[open]')].at(-1);if(open&&open.id==='safetyDialog')settleSafety(false);else if(open&&open.id!=='recoveryDialog')open.close();else setMode('orbit');return}if(e.key===' '){e.preventDefault();$('#playBtn').click();return}if(key==='f'&&state.selection){e.preventDefault();focusSelection();return}if(key==='t'){e.preventDefault();applyCameraPreset('top');return}if(key==='v'){e.preventDefault();applyCameraPreset('isometric');return}if({o:'orbit',i:'inspect',s:'sculpt',p:'paint'}[key])setMode({o:'orbit',i:'inspect',s:'sculpt',p:'paint'}[key]);if(state.view.cameraMode==='fly'&&['w','a','s','d','q','e'].includes(key)){e.preventDefault();const m=e.shiftKey?3.5:1;Scene.moveFreeCamera(state.view,state.world,key==='w'?m:key==='s'?-m:0,key==='d'?m:key==='a'?-m:0,key==='e'?m:key==='q'?-m:0);state.view.cameraPreset='fly';markInteractiveMotion();updateCameraControls();requestRender();scheduleSave();return}let rotated=false;if(e.key==='ArrowLeft'){e.preventDefault();if(e.altKey)state.view.roll=normalizeAngle(state.view.roll-.06);else state.view.yaw=normalizeAngle(state.view.yaw-.06);rotated=true}if(e.key==='ArrowRight'){e.preventDefault();if(e.altKey)state.view.roll=normalizeAngle(state.view.roll+.06);else state.view.yaw=normalizeAngle(state.view.yaw+.06);rotated=true}if(e.key==='ArrowUp'){e.preventDefault();state.view.pitch=normalizeAngle(state.view.pitch+.06);rotated=true}if(e.key==='ArrowDown'){e.preventDefault();state.view.pitch=normalizeAngle(state.view.pitch-.06);rotated=true}if(rotated){state.view.cameraPreset='custom';markInteractiveMotion();updateCameraControls();requestRender();scheduleSave()}})
+}
+
+function buildLegend(){$('#biomeLegend').innerHTML=BIOMES.map(b=>`<div class="legend-item"><span class="swatch" style="background:${b.color}"></span>${escapeHtml(b.name)}</div>`).join('')}
+function animationLoop(t){resizeCanvas();if(state.sim.playing&&!state.world.isBlank){if(!state.sim.last)state.sim.last=t;state.sim.accumulator+=(t-state.sim.last)*state.sim.speed;state.sim.last=t;let guard=0;while(state.sim.accumulator>=state.sim.stepMs&&guard<6){simulationStep(1);state.sim.accumulator-=state.sim.stepMs;guard++}requestRender()}else state.sim.last=t;if(state.view.layers.weather&&['Rain','Snow','Wind'].includes(state.world.weather)&&t-state.lastRenderAt>120)requestRender();requestAnimationFrame(animationLoop)}
+function installQaApi(){if(!window.__GLYPHSCAPE_FORCE_QA__&&!new URLSearchParams(location.search).has('qa'))return;window.__GLYPHSCAPE_QA__={ready:false,version:VERSION,schemaVersion:SCHEMA_VERSION,snapshot:()=>({project:cloneRecord(state.project),scene:cloneRecord(state.scene),generation:cloneRecord(state.generation),view:{...state.view,layers:{...state.view.layers}},tool:{...state.tool},simulation:{day:state.world.day,weather:state.world.weather,speed:state.sim.speed,playing:state.sim.playing},eventLog:cloneRecord(state.eventLog),world:{n:state.world.n,isBlank:state.world.isBlank,blocks:state.world.blocks.length,structures:state.world.structures.length,agents:state.world.agents.length,hash:state.world.isBlank?null:worldFingerprint(serializeWorld())},render:state.sceneFrame?{columns:state.sceneFrame.cols,rows:state.sceneFrame.rows,filled:state.sceneFrame.filled,triangles:state.sceneFrame.triangles,finiteDepth:[...state.sceneFrame.depth].filter(Number.isFinite).length,duration:state.lastRenderDuration,adaptiveScale:state.adaptiveScale,adaptiveReason:state.adaptiveReason}:null,ascii:state.asciiFrame?{columns:state.asciiFrame.cols,rows:state.asciiFrame.rows,visible:state.asciiFrame.visible,mode:state.asciiFrame.mode,textHash:hashString(state.asciiFrame.text),colorHash:hashString(state.asciiFrame.colors.join('|')),uniqueGlyphs:[...new Set(state.asciiFrame.chars.filter(c=>c&&c!==' '))].sort().join(''),edgeCells:[...state.asciiFrame.edge].filter(v=>v>.55).length,weatherCells:state.asciiFrame.weatherCells}:null,baselineHash:state.simulationBaseline?worldFingerprint(serializeWorld(state.simulationBaseline)):null,history:state.history.length,future:state.future.length,storageMode:state.storageMode,recoveryHold:state.recoveryHold,saveState:state.saveState}),record:()=>cloneRecord(makeRecord({touch:false})),validate:record=>migrateRecord(record),projectCount:async()=>(await dbList()).length,raycast:(x,y)=>Scene.raycastTerrain({world:state.world,generation:state.generation,view:state.view,scene:state.scene,px:x,py:y,viewportWidth:canvas.clientWidth,viewportHeight:canvas.clientHeight}),setCameraMode,applyCameraPreset,setRenderMode,markMotion:(duration=600)=>{markInteractiveMotion(duration);requestRender()},buildAscii:(columns=0)=>{const bundle=buildAsciiFrame(columns,0);return bundle?{text:bundle.ascii.text,cols:bundle.ascii.cols,rows:bundle.ascii.rows,visible:bundle.ascii.visible,mode:bundle.ascii.mode}:null},apply:record=>applyRecord(record)}}
+
+
+async function init(){
+ bindControls();installQaApi();buildLegend();renderLog();state.localStorageAvailable=detectLocalStorage();let settings={};try{settings=JSON.parse(storageGet(SETTINGS_KEY)||'{}')}catch{}state.ui.theme=settings.theme||((matchMedia&&matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');state.ui.leftOpen=settings.leftOpen!==false;state.ui.rightOpen=settings.rightOpen!==false;if(innerWidth<=860){state.ui.leftOpen=false;state.ui.rightOpen=false}document.documentElement.dataset.theme=state.ui.theme;applyPanelState();state.db=await openDB();
+ const restored=await restoreActive();if(!restored){initializeBlankProject({newIdentity:true});setStatus(state.recoveryHold?'Stored project recovery is required. A temporary blank session is open.':'Blank project ready. Generate a world or load the demonstration.');if(state.recoveryHold)setAutosave('recovery','Recovery needed');else await saveActive()}else if(state.recoveryHold){setAutosave('recovery','Recovery needed');setStatus(`Recovered ${state.project.name} from an alternate local copy. Review the damaged stored data before it is replaced.`)}else{setStatus(`Recovered ${state.project.name} from local browser storage.`);await saveActive()}
+ syncControlsFromState();updateAllUI();requestRender();requestAnimationFrame(animationLoop);if(window.__GLYPHSCAPE_QA__)window.__GLYPHSCAPE_QA__.ready=true;setTimeout(()=>{canvas.focus({preventScroll:true});if(state.recoveryHold)showRecoveryDialog()},250)
+}
+init().catch(error=>{console.error(error);setAutosave('error');toast('Application initialization failed',`${error.message} Export any recoverable project data before closing this tab.`,'error',9000);setStatus(`Initialization error: ${error.message}`)});
+})();
+</script></body>
+</html>

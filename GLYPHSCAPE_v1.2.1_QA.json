@@ -1,0 +1,91 @@
+{
+  "passed": 17,
+  "total": 17,
+  "results": [
+    {
+      "name": "version visible",
+      "pass": true,
+      "detail": "v1.2.1"
+    },
+    {
+      "name": "randomize label",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "demo perspective",
+      "pass": true,
+      "detail": "perspective"
+    },
+    {
+      "name": "demo orbit",
+      "pass": true,
+      "detail": "orbit"
+    },
+    {
+      "name": "demo neutral exposure",
+      "pass": true,
+      "detail": "0"
+    },
+    {
+      "name": "same seed deterministic",
+      "pass": true,
+      "detail": "6bb85772 vs 6bb85772"
+    },
+    {
+      "name": "iso orthographic",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "orbit restores perspective",
+      "pass": true,
+      "detail": "perspective"
+    },
+    {
+      "name": "orbit preset restored",
+      "pass": true,
+      "detail": "orbit"
+    },
+    {
+      "name": "generation escapes iso",
+      "pass": true,
+      "detail": "{\"yaw\": -0.6632251157578452, \"pitch\": -0.4886921905584123, \"roll\": 0, \"zoom\": 1, \"cameraMode\": \"orbit\", \"cameraPreset\": \"orbit\", \"targetX\": 0, \"targetY\": 0, \"targetZ\": 0, \"positionX\": 0, \"positionY\": 0, \"positionZ\": 0, \"fov\": 48, \"near\": 0.15, \"far\": 384, \"moveSpeed\": 1, \"projection\": \"perspective\", \"renderMode\": \"hybrid\", \"glyphSet\": \"classic\", \"palette\": \"natural\", \"autoResolution\": true, \"outputColumns\": 108, \"captureColumns\": 160, \"adaptiveResolution\": true, \"contrast\": 1.1, \"exposure\": 0, \"edgeStrength\": 0.55, \"depthFade\": 0.22, \"colorMode\": \"material\", \"foreground\": \"#dce8dd\", \"background\": \"#060807\", \"detail\": 1, \"layers\": {\"terrain\": true, \"water\": true, \"vegetation\": true, \"structures\": true, \"agents\": true, \"weather\": true}, \"characterAspect\": 0.60009765625}"
+    },
+    {
+      "name": "generation centered",
+      "pass": true,
+      "detail": "{\"yaw\": -0.6632251157578452, \"pitch\": -0.4886921905584123, \"roll\": 0, \"zoom\": 1, \"cameraMode\": \"orbit\", \"cameraPreset\": \"orbit\", \"targetX\": 0, \"targetY\": 0, \"targetZ\": 0, \"positionX\": 0, \"positionY\": 0, \"positionZ\": 0, \"fov\": 48, \"near\": 0.15, \"far\": 384, \"moveSpeed\": 1, \"projection\": \"perspective\", \"renderMode\": \"hybrid\", \"glyphSet\": \"classic\", \"palette\": \"natural\", \"autoResolution\": true, \"outputColumns\": 108, \"captureColumns\": 160, \"adaptiveResolution\": true, \"contrast\": 1.1, \"exposure\": 0, \"edgeStrength\": 0.55, \"depthFade\": 0.22, \"colorMode\": \"material\", \"foreground\": \"#dce8dd\", \"background\": \"#060807\", \"detail\": 1, \"layers\": {\"terrain\": true, \"water\": true, \"vegetation\": true, \"structures\": true, \"agents\": true, \"weather\": true}, \"characterAspect\": 0.60009765625}"
+    },
+    {
+      "name": "generation fitted zoom",
+      "pass": true,
+      "detail": "1"
+    },
+    {
+      "name": "adaptive recovers full after motion",
+      "pass": true,
+      "detail": "{\"columns\": 92, \"rows\": 49, \"filled\": 1999, \"triangles\": 8316, \"finiteDepth\": 1999, \"duration\": 10.299999998882413, \"adaptiveScale\": 1, \"adaptiveReason\": \"full\"}"
+    },
+    {
+      "name": "adaptive reason full after settle",
+      "pass": true,
+      "detail": "full"
+    },
+    {
+      "name": "idle gap not frame-budget trigger",
+      "pass": true,
+      "detail": "{\"columns\": 92, \"rows\": 49, \"filled\": 1999, \"triangles\": 8316, \"finiteDepth\": 1999, \"duration\": 10.599999999627471, \"adaptiveScale\": 1, \"adaptiveReason\": \"full\"}"
+    },
+    {
+      "name": "frame world perspective orbit",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "no page errors",
+      "pass": true,
+      "detail": ""
+    }
+  ]
+}

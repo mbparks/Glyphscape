@@ -1,0 +1,37 @@
+{
+  "version": "1.2.3",
+  "status": "PASS",
+  "checks": [
+    {
+      "name": "javascript_syntax",
+      "result": "PASS"
+    },
+    {
+      "name": "visible_version_consistency",
+      "result": "PASS"
+    },
+    {
+      "name": "vertical_relief_control",
+      "result": "PASS"
+    },
+    {
+      "name": "default_vertical_scale",
+      "result": "PASS",
+      "value": 0.42
+    },
+    {
+      "name": "legacy_default_upgrade",
+      "result": "PASS",
+      "from": 0.24,
+      "to": 0.42
+    },
+    {
+      "name": "controlled_relief_test",
+      "result": "PASS",
+      "old_rows": 42,
+      "new_rows": 53,
+      "width_cols": 75,
+      "increase_percent": 26.2
+    }
+  ]
+}

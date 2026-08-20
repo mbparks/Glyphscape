@@ -1,0 +1,94 @@
+{
+  "version": "v1.2.2",
+  "suite": "camera framing regression hotfix",
+  "passed": 17,
+  "total": 17,
+  "checks": [
+    {
+      "name": "visible version",
+      "pass": true,
+      "detail": "v1.2.2"
+    },
+    {
+      "name": "demo perspective",
+      "pass": true,
+      "detail": "Perspective"
+    },
+    {
+      "name": "zoom set 1.75",
+      "pass": true,
+      "detail": "175"
+    },
+    {
+      "name": "orbit restores perspective",
+      "pass": true,
+      "detail": "Perspective"
+    },
+    {
+      "name": "orbit restores prior zoom",
+      "pass": true,
+      "detail": "175"
+    },
+    {
+      "name": "generate exits orthographic trap",
+      "pass": true,
+      "detail": "Perspective"
+    },
+    {
+      "name": "generate preserves remembered zoom",
+      "pass": true,
+      "detail": "175"
+    },
+    {
+      "name": "perspective generation preserves zoom",
+      "pass": true,
+      "detail": "205"
+    },
+    {
+      "name": "explicit Frame fits to 1.00",
+      "pass": true,
+      "detail": "100"
+    },
+    {
+      "name": "ASCII resolution visible",
+      "pass": true,
+      "detail": "Render 12 ms 64 \u00d7 64 \u00b7 8,217 triangles Elevation 0\u2013100% Navigate mode Perspective Orbit Hybrid ASCII ASCII 101 \u00d7 59"
+    },
+    {
+      "name": "full-size ASCII after idle",
+      "pass": true,
+      "detail": "('101', '59')"
+    },
+    {
+      "name": "no page errors",
+      "pass": true,
+      "detail": "[]"
+    },
+    {
+      "name": "no console errors",
+      "pass": true,
+      "detail": "[]"
+    },
+    {
+      "name": "JavaScript syntax checked",
+      "pass": true,
+      "detail": "node --check passed"
+    },
+    {
+      "name": "legacy version absent",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "scene vertical scale unchanged",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "generation no forced zoom reset",
+      "pass": true,
+      "detail": ""
+    }
+  ],
+  "sha256": "ef4e2b29219d670437fd6f4db4d22324226c91dde45a6e5a9f600d3c2d9c0cc1"
+}

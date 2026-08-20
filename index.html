@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
 <meta content="dark light" name="color-scheme"/>
-<title>GLYPHSCAPE v1.2.1 — ASCII Vision and Navigation</title>
+<title>GLYPHSCAPE v1.2.2 — ASCII Vision and Navigation</title>
 <meta content="A local-first procedural 3D world simulator and ASCII capture instrument." name="description"/><style>
 :root{
   --bg:#0b0d0c;--surface:#121613;--surface2:#181d19;--surface3:#202720;--line:#344037;
@@ -82,7 +82,7 @@ dialog{width:min(760px,calc(100vw - 28px));max-height:min(820px,calc(100vh - 28p
 @media(max-width:520px){.camera-group .mode-label{display:none}.camera-group .segment{min-width:52px}.camera-readout{grid-template-columns:.8fr 1.2fr}}
 @media(min-width:861px){.toolstrip{flex-wrap:wrap}.toolstrip .spacer{flex:1 1 24px}}
 
-/* v1.2.1 — ASCII Vision visual-regression hotfix */
+/* v1.2.2 — ASCII Vision visual-regression hotfix */
 .ascii-mode-group{background:color-mix(in srgb,var(--accent) 4%,transparent);border-radius:7px;padding-left:5px}.ascii-mode-group .segment{min-width:64px}.render-readout{margin-top:0;margin-bottom:10px}.render-readout b{font-size:11px;line-height:1.25}.color-fields input[type="color"]{padding:3px;height:38px;cursor:pointer}.color-fields input[type="color"]::-webkit-color-swatch-wrapper{padding:0}.color-fields input[type="color"]::-webkit-color-swatch{border:0;border-radius:5px}.color-fields input[type="color"]::-moz-color-swatch{border:0;border-radius:5px}.field-inline input[type="checkbox"]{flex:0 0 auto;width:17px;height:17px;min-height:17px;accent-color:var(--accent)}#outputColumnsRange:disabled{opacity:.42}.stats #renderModeStat,.stats #asciiResolutionStat{border-color:rgba(122,194,230,.35)}
 @media(max-width:1120px){.ascii-mode-group .segment{min-width:58px}.toolstrip .mode-label{display:none}}
 @media(max-width:520px){.ascii-mode-group .segment{min-width:56px}.stats #renderModeStat,.stats #asciiResolutionStat{display:none}}
@@ -96,7 +96,7 @@ dialog{width:min(760px,calc(100vw - 28px));max-height:min(820px,calc(100vh - 28p
 </div>
 <div aria-label="Primary workflow" class="workflow"><b>SEED</b><span>→</span><b>SHAPE</b><span>→</span><b>POPULATE</b><span>→</span><b>SIMULATE</b><span>→</span><b>OBSERVE</b><span>→</span><b>CAPTURE</b></div>
 <div class="status-chip" title="Local autosave status"><span class="autosave-dot" id="autosaveDot"></span><span id="autosaveText">Ready</span></div>
-<div class="version-chip" title="Application version">v1.2.1</div>
+<div class="version-chip" title="Application version">v1.2.2</div>
 <div class="header-actions">
 <button class="mobile-keep" id="newBtn" title="Start a fresh project">＋ <span class="label-hide">New</span></button>
 <button id="projectsBtn" title="Open local projects">▣ <span class="label-hide">Projects</span></button>
@@ -285,7 +285,7 @@ dialog{width:min(760px,calc(100vw - 28px));max-height:min(820px,calc(100vh - 28p
 <div class="dialog-foot"><button id="copyTextBtn">Copy text</button><button class="primary" id="downloadTextDialogBtn">Download text</button><button data-close-dialog="textDialog">Close</button></div>
 </dialog>
 <dialog id="helpDialog">
-<div class="dialog-head"><h2>GLYPHSCAPE v1.2.1</h2><button aria-label="Close help" class="icon" data-close-dialog="helpDialog">×</button></div>
+<div class="dialog-head"><h2>GLYPHSCAPE v1.2.2</h2><button aria-label="Close help" class="icon" data-close-dialog="helpDialog">×</button></div>
 <div class="dialog-body">
 <p>GLYPHSCAPE is a local-first instrument for creating and observing evolving worlds in a <strong>true three-dimensional scene</strong> rendered as animated American Standard Code for Information Interchange (ASCII) art. The primary workflow is <strong>SEED → SHAPE → POPULATE → SIMULATE → OBSERVE → CAPTURE</strong>.</p>
 <div class="help-grid">
@@ -301,7 +301,7 @@ dialog{width:min(760px,calc(100vw - 28px));max-height:min(820px,calc(100vh - 28p
 <div class="dialog-foot"><button class="primary" data-close-dialog="helpDialog">Done</button></div>
 </dialog>
 <div aria-atomic="false" aria-live="polite" class="toast-region" id="toastRegion"></div>
-<script>/* GLYPHSCAPE Scene Core v1.2.1
+<script>/* GLYPHSCAPE Scene Core v1.2.2
  * Dependency-free software 3D scene system for height-field terrain,
  * sparse scene entities, character-cell rasterization, camera transforms,
  * depth testing, and terrain ray casting.
@@ -487,15 +487,15 @@ dialog{width:min(760px,calc(100vw - 28px));max-height:min(820px,calc(100vh - 28p
   function switchCameraMode(view,world,mode){const current=cameraForView(view,world,1,1);if(mode==='fly'){view.positionX=current.position[0];view.positionY=current.position[1];view.positionZ=current.position[2];view.cameraMode='fly';}else{const distance=defaultOrbitDistance(world)/clamp(Number(view.zoom)||1,.08,12),target=add(current.position,scale(current.basis.forward,distance));view.targetX=target[0];view.targetY=target[1];view.targetZ=target[2];view.cameraMode='orbit';}}
   function lookAt(view,world,point){const camera=cameraForView(view,world,1,1),d=normalize(sub(point,camera.position));view.pitch=Math.asin(clamp(d[1],-1,1));view.yaw=Math.atan2(d[0],-d[2]);if(view.cameraMode!=='fly'){view.targetX=point[0];view.targetY=point[1];view.targetZ=point[2];}}
 
-  window.GlyphscapeSceneCore={VERSION:'1.2.1',MATERIAL,KIND,SceneRenderer:{renderScene,raycastTerrain,projectGridPoint,cameraForView,gridToWorld,worldToGrid,terrainHeightAtGrid,gridHeightToWorld,worldVerticalScale,defaultOrbitDistance,orbitPan,flyPan,moveFreeCamera,switchCameraMode,lookAt},math:{add,sub,scale,dot,cross,length,normalize,orientationBasis,projectPoint,rayFromScreen}};
+  window.GlyphscapeSceneCore={VERSION:'1.2.2',MATERIAL,KIND,SceneRenderer:{renderScene,raycastTerrain,projectGridPoint,cameraForView,gridToWorld,worldToGrid,terrainHeightAtGrid,gridHeightToWorld,worldVerticalScale,defaultOrbitDistance,orbitPan,flyPan,moveFreeCamera,switchCameraMode,lookAt},math:{add,sub,scale,dot,cross,length,normalize,orientationBasis,projectPoint,rayFromScreen}};
 })();
-</script><script>/* GLYPHSCAPE ASCII Vision v1.2.1
+</script><script>/* GLYPHSCAPE ASCII Vision v1.2.2
  * Converts Scene Core depth, luminance, material, normal, and world-cell
  * buffers into one reusable character frame for the canvas and exports.
  */
 'use strict';
 (() => {
-  const VERSION='1.2.1';
+  const VERSION='1.2.2';
   const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
   const lerp=(a,b,t)=>a+(b-a)*t;
 
@@ -724,7 +724,7 @@ dialog{width:min(760px,calc(100vw - 28px));max-height:min(820px,calc(100vh - 28p
 })();
 </script><script>'use strict';
 (() => {
-const VERSION='1.2.1';
+const VERSION='1.2.2';
 const SCHEMA_VERSION=4;
 const ACTIVE_KEY='glyphscape.active.v4';
 const LEGACY_ACTIVE_KEYS=['glyphscape.active.v3','glyphscape.active.v2','glyphscape.active.v1'];
@@ -957,7 +957,7 @@ function generateWorld({sample=false,recordHistory=true}={}){
   deriveBiomes(world,true);
   placeSettlements(world,Number(g.settlements)||0,rng,seed);
   world.weather='Clear';world.weatherDays=3+Math.floor(rng()*5);state.world=world;state.project.isSample=sample;state.selection=null;state.sim.playing=false;state.sim.accumulator=0;state.eventLog=[];
-  if(['top','isometric'].includes(state.view.cameraPreset)||state.view.projection==='orthographic')frameWorld({restoreOrientation:true});else if(state.view.cameraMode==='orbit'){state.view.targetX=0;state.view.targetY=0;state.view.targetZ=0;state.view.zoom=1;state.view.projection='perspective';state.view.cameraPreset='orbit';rememberPerspectiveOrbit()}
+  if(['top','isometric'].includes(state.view.cameraPreset)||state.view.projection==='orthographic')restorePerspectiveOrbit();else if(state.view.cameraMode==='orbit'){state.view.projection='perspective';state.view.cameraPreset='orbit';state.view.far=Math.max(state.view.far||0,state.world.n*6);rememberPerspectiveOrbit()}
   logEvent(`Generated ${g.preset} world from seed “${g.seed}”.`);state.simulationBaseline=deserializeWorld(serializeWorld(world));state.baselineEventLog=state.eventLog.slice(0,500);syncControlsFromState();updateAllUI();requestRender();scheduleSave();setStatus(`Generated ${n} × ${n} deterministic world.`);toast('World generated',`${n} × ${n} cells from seed “${g.seed}”.`)
 }
 function deriveBiomes(world=state.world,initializeVegetation=false){const n=world.n,sea=state.generation.seaLevel;for(let i=0;i<n*n;i++){
@@ -1039,8 +1039,9 @@ function finishStroke(){if(state.strokeChanged&&state.strokeSnapshot){state.hist
 function applyBrushAt(x,y){const w=state.world,n=w.n;if(w.isBlank)return;const radius=state.tool.mode==='paint'?state.tool.paintRadius:state.tool.radius,cx=Math.round(x),cy=Math.round(y);for(let oy=-radius;oy<=radius;oy++)for(let ox=-radius;ox<=radius;ox++){const qx=cx+ox,qy=cy+oy;if(qx<0||qy<0||qx>=n||qy>=n)continue;const dist=Math.hypot(ox,oy);if(dist>radius)continue;const fall=Math.pow(1-dist/(radius+.001),1.4),i=idx(qx,qy,n);if(state.tool.mode==='sculpt'){const amt=state.tool.strength*.035*fall;if(state.tool.sculptAction==='raise')w.height[i]=clamp(w.height[i]+amt);else if(state.tool.sculptAction==='lower')w.height[i]=clamp(w.height[i]-amt);else{let sum=0,count=0;for(let sy=-1;sy<=1;sy++)for(let sx=-1;sx<=1;sx++){const nx=qx+sx,ny=qy+sy;if(nx>=0&&ny>=0&&nx<n&&ny<n){sum+=w.height[idx(nx,ny,n)];count++}}w.height[i]=lerp(w.height[i],sum/count,state.tool.strength*.18*fall)}}else if(state.tool.mode==='paint'){const target=state.tool.paintValue,amount=.22*fall,key=state.tool.paintLayer;if(key==='fire')w.fire[i]=lerp(w.fire[i],target,amount);else if(key==='water')w.water[i]=lerp(w.water[i],target*.45,amount);else if(key in w)w[key][i]=lerp(w[key][i],target,amount)}state.strokeChanged=true}selectCell(cx,cy);requestRender()}
 function setMode(mode){state.tool.mode=mode;$$('.mode-btn').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));$('#viewport').dataset.mode=mode;const label=mode==='orbit'?'Navigate':mode[0].toUpperCase()+mode.slice(1);$('#pointerModeStat').textContent=`${label} mode`;['orbit','inspect','sculpt','paint'].forEach(m=>{$(`#${m}Tool`).hidden=m!==mode});setStatus({orbit:`Navigate using the ${state.view.cameraMode==='fly'?'Free Fly':'Orbit'} camera. Left-drag looks; right or Alt-drag rolls; Shift or middle-drag pans.`,inspect:'Ray-cast a visible terrain location to inspect it.',sculpt:'Drag across the ray-cast terrain surface to sculpt elevation.',paint:'Drag across the ray-cast terrain surface to paint world properties.'}[mode]);scheduleSave()}
 function rememberPerspectiveOrbit(){if(state.view.cameraMode==='orbit'&&state.view.projection==='perspective'&&!['top','isometric'].includes(state.view.cameraPreset)){state.lastOrbitView={yaw:state.view.yaw,pitch:state.view.pitch,roll:state.view.roll,zoom:state.view.zoom,targetX:state.view.targetX,targetY:state.view.targetY,targetZ:state.view.targetZ,fov:state.view.fov,near:state.view.near,far:state.view.far}}}
-function frameWorld({restoreOrientation=true}={}){if(state.view.cameraMode==='fly')Scene.switchCameraMode(state.view,state.world,'orbit');const remembered=restoreOrientation&&state.lastOrbitView?state.lastOrbitView:null;Object.assign(state.view,{cameraMode:'orbit',cameraPreset:'orbit',projection:'perspective',targetX:0,targetY:0,targetZ:0,zoom:1,positionX:0,positionY:0,positionZ:0,fov:remembered?.fov??48,near:.15,far:state.world.n*6});if(remembered){state.view.yaw=remembered.yaw;state.view.pitch=remembered.pitch;state.view.roll=remembered.roll}else{state.view.yaw=-38*Math.PI/180;state.view.pitch=-28*Math.PI/180;state.view.roll=0}rememberPerspectiveOrbit();markInteractiveMotion();updateCameraControls();requestRender()}
-function setCameraMode(mode){if(mode!=='orbit'&&mode!=='fly')return;if(mode==='orbit'&&['top','isometric'].includes(state.view.cameraPreset)){frameWorld({restoreOrientation:true});scheduleSave();setStatus('Perspective Orbit restored and the world was framed.');return}if(mode==='fly')rememberPerspectiveOrbit();Scene.switchCameraMode(state.view,state.world,mode);state.view.cameraPreset=mode;if(mode==='orbit')state.view.projection='perspective';markInteractiveMotion();updateCameraControls();requestRender();scheduleSave();setStatus(mode==='fly'?'Free Fly active. Use W A S D to move, Q/E vertically, and drag to look.':'Perspective Orbit active. Drag to rotate around the current focus point.')}
+function restorePerspectiveOrbit(){if(state.view.cameraMode==='fly')Scene.switchCameraMode(state.view,state.world,'orbit');const remembered=state.lastOrbitView;Object.assign(state.view,{cameraMode:'orbit',cameraPreset:'orbit',projection:'perspective',positionX:0,positionY:0,positionZ:0});if(remembered){Object.assign(state.view,{yaw:remembered.yaw,pitch:remembered.pitch,roll:remembered.roll,zoom:remembered.zoom,targetX:remembered.targetX,targetY:remembered.targetY,targetZ:remembered.targetZ,fov:remembered.fov,near:remembered.near,far:Math.max(remembered.far||0,state.world.n*6)})}else Object.assign(state.view,{yaw:-38*Math.PI/180,pitch:-28*Math.PI/180,roll:0,zoom:1,targetX:0,targetY:0,targetZ:0,fov:48,near:.15,far:state.world.n*6});rememberPerspectiveOrbit();markInteractiveMotion();updateCameraControls();requestRender()}
+function frameWorld(){if(state.view.cameraMode==='fly')Scene.switchCameraMode(state.view,state.world,'orbit');Object.assign(state.view,{cameraMode:'orbit',cameraPreset:'orbit',projection:'perspective',targetX:0,targetY:0,targetZ:0,zoom:1,positionX:0,positionY:0,positionZ:0,fov:48,near:.15,far:state.world.n*6,yaw:-38*Math.PI/180,pitch:-28*Math.PI/180,roll:0});rememberPerspectiveOrbit();markInteractiveMotion();updateCameraControls();requestRender()}
+function setCameraMode(mode){if(mode!=='orbit'&&mode!=='fly')return;if(mode==='orbit'&&['top','isometric'].includes(state.view.cameraPreset)){restorePerspectiveOrbit();scheduleSave();setStatus('Perspective Orbit restored with the previous perspective composition.');return}if(mode==='fly')rememberPerspectiveOrbit();Scene.switchCameraMode(state.view,state.world,mode);state.view.cameraPreset=mode;if(mode==='orbit')state.view.projection='perspective';markInteractiveMotion();updateCameraControls();requestRender();scheduleSave();setStatus(mode==='fly'?'Free Fly active. Use W A S D to move, Q/E vertically, and drag to look.':'Perspective Orbit active. Drag to rotate around the current focus point.')}
 function applyCameraPreset(preset){
   if(preset==='orbit'||preset==='fly'){setCameraMode(preset);return}
   if(!['top','isometric'].includes(preset))return;

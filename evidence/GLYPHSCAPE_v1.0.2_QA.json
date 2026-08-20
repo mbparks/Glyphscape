@@ -1,0 +1,447 @@
+{
+  "application": "GLYPHSCAPE",
+  "version": "1.0.2",
+  "schemaVersion": 2,
+  "runUtc": "2026-08-19T23:46:01.592729+00:00",
+  "environment": {
+    "browser": "System Chromium via Playwright",
+    "navigation": "about:blank + page.set_content() because container policy blocks local/HTTP URL navigation",
+    "storage": "Test-only in-memory localStorage and IndexedDB shims injected before application startup",
+    "deliveredApplicationModifiedByTest": false
+  },
+  "totals": {
+    "passed": 64,
+    "failed": 0,
+    "total": 64
+  },
+  "checks": [
+    {
+      "name": "Visible version is v1.0.2",
+      "status": "PASS"
+    },
+    {
+      "name": "Document title carries v1.0.2",
+      "status": "PASS"
+    },
+    {
+      "name": "HTML identifiers are unique",
+      "status": "PASS",
+      "detail": {
+        "ids": 143,
+        "unique": 143
+      }
+    },
+    {
+      "name": "Schema constant is version 2",
+      "status": "PASS"
+    },
+    {
+      "name": "No external script or stylesheet dependencies",
+      "status": "PASS"
+    },
+    {
+      "name": "No network URLs embedded in application",
+      "status": "PASS",
+      "detail": []
+    },
+    {
+      "name": "Explicit lifecycle controls exist",
+      "status": "PASS"
+    },
+    {
+      "name": "Recovery workflow controls exist",
+      "status": "PASS"
+    },
+    {
+      "name": "Cold start opens a genuinely blank project",
+      "status": "PASS",
+      "detail": {
+        "project": {
+          "id": "mt0qp9si-2bhdtuj",
+          "name": "Untitled World",
+          "createdAt": "2026-08-19T23:45:46.962Z",
+          "updatedAt": "2026-08-19T23:45:47.428Z",
+          "schemaVersion": 2,
+          "isSample": false
+        },
+        "generation": {
+          "seed": "green-shoe",
+          "preset": "highlands",
+          "resolution": 64,
+          "seaLevel": 0.34,
+          "roughness": 0.58,
+          "climate": "temperate",
+          "settlements": 4
+        },
+        "view": {
+          "yaw": -0.6632251157578452,
+          "pitch": 0.8028514559173915,
+          "roll": 0,
+          "zoom": 1,
+          "panX": 0,
+          "panY": 0,
+          "projection": "perspective",
+          "glyphSet": "classic",
+          "palette": "natural",
+          "detail": 1,
+          "color": true,
+          "shadow": true,
+          "layers": {
+            "terrain": true,
+            "water": true,
+            "vegetation": true,
+            "structures": true,
+            "agents": true,
+            "weather": true
+          }
+        },
+        "tool": {
+          "mode": "orbit",
+          "sculptAction": "raise",
+          "radius": 3,
+          "strength": 0.4,
+          "paintLayer": "moisture",
+          "paintValue": 0.7,
+          "paintRadius": 3
+        },
+        "simulation": {
+          "day": 0,
+          "weather": "Clear",
+          "speed": 1,
+          "playing": false
+        },
+        "eventLog": [],
+        "world": {
+          "n": 64,
+          "isBlank": true,
+          "structures": 0,
+          "agents": 0,
+          "hash": null
+        },
+        "baselineHash": "07372f50",
+        "history": 0,
+        "future": 0,
+        "storageMode": "Indexed Database and local fallback",
+        "recoveryHold": false,
+        "saveState": "saved"
+      }
+    },
+    {
+      "name": "Blank-state world controls are disabled",
+      "status": "PASS"
+    },
+    {
+      "name": "Stop is disabled while paused",
+      "status": "PASS"
+    },
+    {
+      "name": "Demo loads only after explicit action",
+      "status": "PASS"
+    },
+    {
+      "name": "Demo creates terrain, structures, and agents",
+      "status": "PASS",
+      "detail": {
+        "n": 64,
+        "isBlank": false,
+        "structures": 4,
+        "agents": 15,
+        "hash": "1bd548df"
+      }
+    },
+    {
+      "name": "Same seed and settings reproduce the same initial world",
+      "status": "PASS",
+      "detail": {
+        "first": "1bd548df",
+        "second": "1bd548df"
+      }
+    },
+    {
+      "name": "Sculpting changes the world through the rendered viewport",
+      "status": "PASS",
+      "detail": {
+        "before": "1bd548df",
+        "after": "b01b1068"
+      }
+    },
+    {
+      "name": "Sculpting creates one undoable transaction",
+      "status": "PASS",
+      "detail": {
+        "before": 2,
+        "after": 3
+      }
+    },
+    {
+      "name": "Undo restores the pre-sculpt world",
+      "status": "PASS",
+      "detail": {
+        "expected": "1bd548df",
+        "actual": "1bd548df"
+      }
+    },
+    {
+      "name": "Redo restores the sculpted world",
+      "status": "PASS",
+      "detail": {
+        "expected": "b01b1068",
+        "actual": "b01b1068"
+      }
+    },
+    {
+      "name": "Camera yaw persists in live project state",
+      "status": "PASS",
+      "detail": 3.0543261909900767
+    },
+    {
+      "name": "Camera pitch supports full-orientation value",
+      "status": "PASS",
+      "detail": -2.617993877991495
+    },
+    {
+      "name": "Camera roll persists in live project state",
+      "status": "PASS",
+      "detail": -2.652900463031381
+    },
+    {
+      "name": "Simulation advanced one day",
+      "status": "PASS",
+      "detail": {
+        "day": 1,
+        "weather": "Rain",
+        "speed": 1,
+        "playing": false
+      }
+    },
+    {
+      "name": "Triggered event is recorded",
+      "status": "PASS",
+      "detail": [
+        {
+          "at": "2026-08-19T23:45:49.675Z",
+          "day": 1,
+          "message": "A sustained rainstorm crossed the world.",
+          "kind": ""
+        },
+        {
+          "at": "2026-08-19T23:45:48.513Z",
+          "day": 0,
+          "message": "Generated highlands world from seed \u201cgreen-shoe\u201d.",
+          "kind": ""
+        }
+      ]
+    },
+    {
+      "name": "Reset simulation restores baseline day",
+      "status": "PASS",
+      "detail": {
+        "day": 0,
+        "weather": "Clear",
+        "speed": 1,
+        "playing": false
+      }
+    },
+    {
+      "name": "Reset simulation preserves project identity and camera",
+      "status": "PASS"
+    },
+    {
+      "name": "Explicit save reaches local saved state",
+      "status": "PASS",
+      "detail": "saved"
+    },
+    {
+      "name": "Saved project uses schema 2 with integrity hash",
+      "status": "PASS"
+    },
+    {
+      "name": "JSON export downloads a complete schema-2 project",
+      "status": "PASS"
+    },
+    {
+      "name": "JSON export preserves world integrity hash",
+      "status": "PASS"
+    },
+    {
+      "name": "PNG capture regression passes",
+      "status": "PASS",
+      "detail": 449573
+    },
+    {
+      "name": "Active project is present in local fallback",
+      "status": "PASS"
+    },
+    {
+      "name": "Active project is present in IndexedDB library",
+      "status": "PASS"
+    },
+    {
+      "name": "Saved project reopens after simulated browser close",
+      "status": "PASS"
+    },
+    {
+      "name": "Reopen preserves world hash",
+      "status": "PASS",
+      "detail": {
+        "expected": "d1565073",
+        "actual": "d1565073"
+      }
+    },
+    {
+      "name": "Reopen preserves simulation time and event log",
+      "status": "PASS"
+    },
+    {
+      "name": "Reopen preserves full camera orientation",
+      "status": "PASS"
+    },
+    {
+      "name": "Project library duplicates the current project",
+      "status": "PASS",
+      "detail": {
+        "before": 2,
+        "after": 3
+      }
+    },
+    {
+      "name": "Project library renames a saved project",
+      "status": "PASS"
+    },
+    {
+      "name": "Project library deletes a selected saved project",
+      "status": "PASS",
+      "detail": {
+        "before": 4,
+        "after": 3
+      }
+    },
+    {
+      "name": "Project library opens a selected branch",
+      "status": "PASS",
+      "detail": {
+        "id": "mt0qpds3-ne3a6bx",
+        "name": "Branch A",
+        "createdAt": "2026-08-19T23:45:52.131Z",
+        "updatedAt": "2026-08-19T23:45:54.264Z",
+        "schemaVersion": 2,
+        "isSample": false
+      }
+    },
+    {
+      "name": "Opened branch preserves duplicated world data",
+      "status": "PASS"
+    },
+    {
+      "name": "New creates a separate blank project identity",
+      "status": "PASS"
+    },
+    {
+      "name": "JSON import reproduces exported world",
+      "status": "PASS"
+    },
+    {
+      "name": "JSON import preserves project metadata",
+      "status": "PASS"
+    },
+    {
+      "name": "JSON import preserves camera, simulation time, and event log",
+      "status": "PASS"
+    },
+    {
+      "name": "Malformed typed-array import is rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "Rejected import leaves current project unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "Schema-v1 project migrates safely to schema 2",
+      "status": "PASS"
+    },
+    {
+      "name": "Migrated project receives a valid simulation baseline",
+      "status": "PASS"
+    },
+    {
+      "name": "Clear all local data opens a blank unsaved session",
+      "status": "PASS"
+    },
+    {
+      "name": "Clear all local data removes active fallback and settings",
+      "status": "PASS",
+      "detail": []
+    },
+    {
+      "name": "Clear all local data empties IndexedDB project store",
+      "status": "PASS",
+      "detail": 0
+    },
+    {
+      "name": "Corrupted active project opens recovery mode instead of crashing",
+      "status": "PASS"
+    },
+    {
+      "name": "Recovery hold leaves damaged stored data untouched",
+      "status": "PASS"
+    },
+    {
+      "name": "Recovery screen exposes readable technical details",
+      "status": "PASS",
+      "detail": "{\n  \"application\": \"glyphscape v1.0.2\",\n  \"schema\": 2,\n  \"source\": \"active project key glyphscape.active.v2\",\n  \"error\": \"height field has 3 bytes; expected 16384.\",\n  \"detectedat\": \"2026-08-19t23:45:57.700z\",\n  \"laststorageerror\": null\n}"
+    },
+    {
+      "name": "Repair downloads recoverable raw data first",
+      "status": "PASS"
+    },
+    {
+      "name": "Repair replaces damaged active record with valid blank project",
+      "status": "PASS"
+    },
+    {
+      "name": "Blocked persistent storage falls back to session-only mode",
+      "status": "PASS",
+      "detail": {
+        "storageMode": "session only",
+        "saveState": "session"
+      }
+    },
+    {
+      "name": "Session-only mode remains fully usable",
+      "status": "PASS"
+    },
+    {
+      "name": "Compact layout has no horizontal overflow",
+      "status": "PASS",
+      "detail": 0
+    },
+    {
+      "name": "Visible version remains present at phone width",
+      "status": "PASS"
+    },
+    {
+      "name": "Read-only viewport remains visible at phone width",
+      "status": "PASS",
+      "detail": {
+        "x": 0,
+        "y": 103,
+        "width": 390,
+        "height": 703
+      }
+    },
+    {
+      "name": "No uncaught page errors",
+      "status": "PASS",
+      "detail": []
+    },
+    {
+      "name": "No browser console errors",
+      "status": "PASS",
+      "detail": []
+    }
+  ],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "notes": []
+}
